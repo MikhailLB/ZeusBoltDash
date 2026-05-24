@@ -365,9 +365,7 @@ class _ZeusGateState extends State<ZeusGate> {
           if (_videoReady)
             Positioned(
               left: 0, right: 0,
-              bottom: landscape
-                  ? mq.padding.bottom + mq.size.height * 0.08
-                  : mq.padding.bottom,
+              bottom: landscape ? 0 : mq.padding.bottom,
               child: Center(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
