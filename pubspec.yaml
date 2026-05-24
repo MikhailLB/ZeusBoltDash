@@ -34,15 +34,12 @@ flutter:
     - assets/nowifi/
 
 flutter_launcher_icons:
-  # Use the lightning logo as the app icon
-  image_path: "assets/Logo_White.webp"
+  image_path: "assets/app_icon.png"
   android: true
   ios: true
-  # Android adaptive icon: logo as foreground on dark blue background
-  adaptive_icon_foreground: "assets/Logo_White.webp"
-  adaptive_icon_background: "#0D0A2E"
-  # Remove white padding on iOS
-  remove_alpha_ios: true
+  adaptive_icon_foreground: "assets/app_icon.png"
+  adaptive_icon_background: "#1A2A6E"
+  remove_alpha_ios: false
   web:
     generate: false
   windows:
