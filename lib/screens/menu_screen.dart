@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'settings_dialog.dart';
 import 'web_view_screen.dart';
@@ -21,6 +22,11 @@ class _MenuScreenState extends State<MenuScreen>
   @override
   void initState() {
     super.initState();
+    // Lock to portrait for gameplay on all devices including iPad.
+    SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
