@@ -34,11 +34,10 @@ class _LoadingScreenState extends State<LoadingScreen>
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setPreferredOrientations([
+    // Lock portrait immediately — game is portrait-only on all devices.
+    SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
     ]);
 
     _progressCtrl = AnimationController(vsync: this, duration: _barDuration);

@@ -304,6 +304,12 @@ class _ZeusGateState extends State<ZeusGate> {
   void _navigateToGame() {
     if (_routed) return;
     _routed = true;
+    // Lock portrait BEFORE navigation so iPad doesn't snap to landscape
+    // during the transition to MenuScreen.
+    SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MenuScreen()),
     );
