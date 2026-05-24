@@ -1,0 +1,51 @@
+name: zeus_bolt_dash
+description: Zeus Bolt Dash — Ancient Greek arcade catcher game.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.18.0
+  shared_preferences: ^2.3.0
+  video_player: ^2.9.1
+  vibration: ^2.0.0
+  google_fonts: ^6.2.1
+  audioplayers: ^6.1.0
+  webview_flutter: ^4.10.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/game_assets/
+    - assets/Loading/
+    - assets/Notifications/
+    - assets/nowifi/
+
+flutter_launcher_icons:
+  # Use the lightning logo as the app icon
+  image_path: "assets/Logo_White.webp"
+  android: true
+  ios: true
+  # Android adaptive icon: logo as foreground on dark blue background
+  adaptive_icon_foreground: "assets/Logo_White.webp"
+  adaptive_icon_background: "#0D0A2E"
+  # Remove white padding on iOS
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
