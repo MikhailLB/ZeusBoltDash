@@ -53,10 +53,6 @@ class _ZeusGateState extends State<ZeusGate> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations(const [
-      DeviceOrientation.portraitUp, DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight,
-    ]);
     _launch();
   }
 
