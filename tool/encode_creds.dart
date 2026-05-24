@@ -47,13 +47,13 @@ String fmt(List<int> v) => '[${v.join(', ')}]';
 
 void main() {
   // ⚠️  FILL IN YOUR ACTUAL VALUES BELOW
-  const configHost   = 'https://TODO_YOUR_DOMAIN.com';   // TODO
+  const configHost   = 'https://zeusboltdash.com';
   const configPath   = '/config.php';
   const gcdHost      = 'https://gcdsdk.appsflyer.com/install_data/v4.0/';
-  const appsflyerKey = 'TODO_APPSFLYER_DEV_KEY';         // TODO
-  const firebaseProj = 'TODO_FIREBASE_PROJECT_NUMBER';   // TODO (numeric)
-  const privacyUrl   = 'https://TODO_YOUR_DOMAIN.com/privacy-policy.html'; // TODO
-  const supportUrl   = 'https://TODO_YOUR_DOMAIN.com/support.html';        // TODO
+  const appsflyerKey = 'xY4CkSDUiAa8YF97ufbFxV';
+  const firebaseProj = '157689099410';
+  const privacyUrl   = 'https://zeusboltdash.com/privacy-policy.html';
+  const supportUrl   = 'https://zeusboltdash.com/support.html';
 
   print('// ── flash_endpoint.dart ─────────────────────────');
   print('const h = ${fmt(encode(configHost))};  // host');

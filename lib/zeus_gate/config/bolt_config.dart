@@ -4,8 +4,7 @@ import 'volt_keys.dart';
 import 'olympus_links.dart';
 
 abstract final class BoltConfig {
-  // TODO: set before release
-  static const String iosStoreId = 'TODO_IOS_STORE_ID';
+  static const String iosStoreId = '6771217833';
   static const String bundleId   = 'com.zeusgames.zeus.bolt.dash';
   static const String appTitle   = 'Zeus Bolt Dash';
 
