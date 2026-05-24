@@ -204,8 +204,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = Runner;
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
