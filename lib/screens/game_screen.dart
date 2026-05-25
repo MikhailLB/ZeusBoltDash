@@ -19,11 +19,20 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations(const [
+    SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
     _game = ZeusBoltDashGame();
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
   }
 
   @override

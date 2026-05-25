@@ -34,8 +34,8 @@ class _LoadingScreenState extends State<LoadingScreen>
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    // Lock portrait immediately — game is portrait-only on all devices.
-    SystemChrome.setPreferredOrientations(const [
+    // Lock portrait only — game breaks in landscape and on iPad landscape.
+    SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
@@ -147,7 +147,6 @@ class _LoadingScreenState extends State<LoadingScreen>
   void _goToMenu() {
     if (_navigated || !mounted) return;
     _navigated = true;
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     Navigator.of(context).pushReplacementNamed('/menu');
   }
 
@@ -158,6 +157,11 @@ class _LoadingScreenState extends State<LoadingScreen>
     _portraitVideo?.dispose();
     _landscapeVideo?.dispose();
     _progressCtrl.dispose();
+    // Keep portrait-only on dispose — don't re-enable landscape.
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 

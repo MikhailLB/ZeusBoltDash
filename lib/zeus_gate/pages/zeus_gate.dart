@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../screens/menu_screen.dart';
@@ -300,12 +299,6 @@ class _ZeusGateState extends State<ZeusGate> {
   void _navigateToGame() {
     if (_routed) return;
     _routed = true;
-    // Lock portrait BEFORE navigation so iPad doesn't snap to landscape
-    // during the transition to MenuScreen.
-    SystemChrome.setPreferredOrientations(const [
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MenuScreen()),
     );

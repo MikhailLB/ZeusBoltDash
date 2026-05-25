@@ -40,9 +40,13 @@ Future<void> main() async {
   final sw = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations(const [
+  // Allow all orientations by default — gray flow screens (ZeusGate, Altar,
+  // OracleView) support landscape. White-part screens lock portrait in initState.
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

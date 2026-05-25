@@ -22,8 +22,8 @@ class _MenuScreenState extends State<MenuScreen>
   @override
   void initState() {
     super.initState();
-    // Lock to portrait for gameplay on all devices including iPad.
-    SystemChrome.setPreferredOrientations(const [
+    // Lock portrait only — game breaks in landscape and on iPad landscape.
+    SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
@@ -50,6 +50,11 @@ class _MenuScreenState extends State<MenuScreen>
   void dispose() {
     _pulseCtrl.dispose();
     _entranceCtrl.dispose();
+    // Keep portrait-only on dispose — don't re-enable landscape.
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 
