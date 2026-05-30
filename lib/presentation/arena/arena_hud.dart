@@ -99,6 +99,20 @@ class ArenaHud extends StatelessWidget {
             ),
           ),
 
+          // ── Tutorial hint ────────────────────────────────────────────────
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 92,
+            child: ValueListenableBuilder<String?>(
+              valueListenable: world.tutorialHint,
+              builder: (_, hint, __) {
+                if (hint == null) return const SizedBox.shrink();
+                return _HintBubble(text: hint, accent: acc);
+              },
+            ),
+          ),
+
           // ── Wrath meter + ultimate ───────────────────────────────────────
           Positioned(
             left: 16,
@@ -107,6 +121,30 @@ class ArenaHud extends StatelessWidget {
             child: _WrathBar(world: world),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HintBubble extends StatelessWidget {
+  const _HintBubble({required this.text, required this.accent});
+  final String text;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.8), width: 1.4),
+        boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.3), blurRadius: 14)],
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: Glyph.label(size: 14, color: Colors.white),
       ),
     );
   }

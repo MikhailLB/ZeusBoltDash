@@ -6,6 +6,7 @@ import '../../theme/aegis_palette.dart';
 import '../../theme/glyph.dart';
 import '../widgets/aegis_button.dart';
 import '../widgets/sky_backdrop.dart';
+import '../arena/arena_screen.dart';
 
 class _Page {
   final String sigil;
@@ -14,9 +15,14 @@ class _Page {
   const _Page(this.sigil, this.title, this.body);
 }
 
-/// The Codex — a short, swipeable rulebook explaining the parry-defense loop.
+/// The Codex — a short, swipeable rulebook explaining the parry-defense loop
+/// in very simple words. On first launch it leads straight into the tutorial.
 class CodexScreen extends StatefulWidget {
-  const CodexScreen({super.key});
+  const CodexScreen({super.key, this.firstRun = false});
+
+  /// When true (first app launch) the final page starts the tutorial; when
+  /// false (opened from the menu) it simply returns.
+  final bool firstRun;
 
   @override
   State<CodexScreen> createState() => _CodexScreenState();
@@ -27,18 +33,18 @@ class _CodexScreenState extends State<CodexScreen> {
   int _index = 0;
 
   static const _pages = [
-    _Page('🛡️', 'HOLD THE CORE',
-        'You stand at the heart of the arena. Threats converge from every gate. Let none reach you.'),
-    _Page('👉', 'SWIPE TO PARRY',
-        'Flick toward an incoming threat to raise your aegis in that direction and cast it back.'),
-    _Page('✨', 'PERFECT TIMING',
-        'Parry at the last moment for a PERFECT — double score and a far greater surge of Wrath.'),
-    _Page('💚', 'TAKE THE BLESSING',
-        'Green blessings and golden motes are gifts. Do NOT parry them — let them reach the core.'),
-    _Page('⚡', 'UNLEASH WRATH',
-        'Parries fill your Wrath meter. When it is full, tap it to unleash your deity\'s ultimate.'),
-    _Page('⛰️', 'BREAK THE TITANS',
-        'Every fifth wave the Titans march. They shrug off single hits — parry them again and again.'),
+    _Page('🛡️', 'YOU ARE THE GOD',
+        'You stand in the middle. Bad things fly at you from every side. Do not let them touch you!'),
+    _Page('👉', 'SWIPE TO PUSH',
+        'Swipe your finger toward a bad thing. Your shield pushes it away. Easy!'),
+    _Page('✨', 'WAIT, THEN SWIPE',
+        'Push right before it touches you to get a PERFECT. You earn lots more points!'),
+    _Page('💚', 'GRAB THE GIFTS',
+        'Green and gold balls are gifts. Do NOT push them. Let them come to you!'),
+    _Page('⚡', 'BIG BLAST',
+        'Every push fills your power bar. When it is full, tap it for a HUGE blast!'),
+    _Page('⛰️', 'GIANT TITANS',
+        'Sometimes a huge Titan comes. Push it again and again until it goes away!'),
   ];
 
   @override
@@ -52,6 +58,26 @@ class _CodexScreenState extends State<CodexScreen> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Finished reading: first launch → tutorial; otherwise return to caller.
+  void _finish() {
+    if (widget.firstRun) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const ArenaScreen(tutorial: true)),
+      );
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  /// Closed early: first launch → skip straight to the Sanctuary.
+  void _skip() {
+    if (widget.firstRun) {
+      Navigator.of(context).pushReplacementNamed('/sanctuary');
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -68,7 +94,7 @@ class _CodexScreenState extends State<CodexScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: _skip,
                     icon: const Icon(Icons.close_rounded, color: AegisPalette.goldBright),
                   ),
                 ),
@@ -85,12 +111,12 @@ class _CodexScreenState extends State<CodexScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: AegisButton(
-                    label: last ? 'ENTER ARENA' : 'NEXT',
+                    label: last ? (widget.firstRun ? 'TRY IT!' : 'ENTER ARENA') : 'NEXT',
                     sigil: last ? '⚔' : '→',
                     width: 320,
                     onTap: () {
                       if (last) {
-                        Navigator.of(context).pop();
+                        _finish();
                       } else {
                         _controller.nextPage(
                             duration: const Duration(milliseconds: 280),

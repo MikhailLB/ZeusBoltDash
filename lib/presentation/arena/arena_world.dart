@@ -35,14 +35,17 @@ class FloatText {
 /// by [ArenaPainter] which repaints from [frame]; the HUD binds to the
 /// individual [ValueNotifier]s below.
 class ArenaWorld {
-  ArenaWorld() {
+  ArenaWorld({this.tutorial = false}) {
     final p = ProfileStore.instance.profile;
     deity = DeityCatalog.byId(p.deity);
-    _parryWindow = p.parryWindow;
+    _parryWindow = tutorial ? 0.40 : p.parryWindow; // forgiving while learning
     _wrathPerParry = p.wrathPerParry;
-    _guardCapacity = p.guardCapacity;
+    _guardCapacity = tutorial ? 99 : p.guardCapacity;
     guard.value = _guardCapacity;
   }
+
+  /// When true the arena runs a gentle scripted tutorial instead of waves.
+  final bool tutorial;
 
   // ── Loadout ────────────────────────────────────────────────────────────
   late final Deity deity;
@@ -80,6 +83,23 @@ class ArenaWorld {
   double _flameTimer = 0; // flame ring
   double ultPulse = 0; // 0..1 visual pulse after firing an ult
   UltimateKind? lastUlt;
+
+  // ── Sprites (decoded by the screen and injected here) ────────────────────────
+  List<Image> rockImages = const [];
+  List<Image> boltImages = const [];
+
+  // ── Screen shake ─────────────────────────────────────────────────────────────
+  double _shake = 0;
+  Offset shakeOffset = Offset.zero;
+  final math.Random _rng = math.Random();
+
+  // ── Tutorial state ─────────────────────────────────────────────────────────
+  final ValueNotifier<String?> tutorialHint = ValueNotifier(null);
+  bool tutorialFinished = false;
+  VoidCallback? onTutorialDone;
+  int _tutPhase = 0;
+  double _tutTimer = 0;
+  int _tutBlessings = 0;
 
   // ── HUD notifiers ────────────────────────────────────────────────────────
   final ValueNotifier<int> score = ValueNotifier(0);
@@ -124,30 +144,43 @@ class ArenaWorld {
     if (_flameTimer > 0) _flameTimer -= dt;
     if (ultPulse > 0) ultPulse = (ultPulse - dt * 1.6).clamp(0, 1);
 
-    wrath.decay(dt);
-
-    // Spawn
-    director.update(
-      dt,
-      arenaRadius: arenaRadius,
-      liveThreats: threats.where((t) => t.isAlive).length,
-      spawn: threats.add,
-    );
-
-    // Wave change banner + flawless trial
-    if (director.wave != _lastWave) {
-      if (!_waveDamaged) _grantTrial('flawless_wave');
-      _waveDamaged = false;
-      _lastWave = director.wave;
-      wave.value = director.wave;
-      _showBanner(director.isTitanWave
-          ? '⛰  TITAN WAVE ${director.wave}'
-          : 'WAVE ${director.wave}');
-      if (director.wave == 10) _grantTrial('wave_10');
-      if (director.wave == 20) _grantTrial('wave_20');
+    // Screen shake decay
+    if (_shake > 0) {
+      _shake = (_shake - dt * 26).clamp(0, 40);
+      shakeOffset = Offset(
+        (_rng.nextDouble() - 0.5) * _shake,
+        (_rng.nextDouble() - 0.5) * _shake,
+      );
+    } else {
+      shakeOffset = Offset.zero;
     }
 
-    // Flame-ring continuous clear
+    wrath.decay(dt);
+
+    // Spawn — scripted tutorial or the wave director.
+    if (tutorial) {
+      _updateTutorial(dt);
+    } else {
+      director.update(
+        dt,
+        arenaRadius: arenaRadius,
+        liveThreats: threats.where((t) => t.isAlive).length,
+        spawn: threats.add,
+      );
+      if (director.wave != _lastWave) {
+        if (!_waveDamaged) _grantTrial('flawless_wave');
+        _waveDamaged = false;
+        _lastWave = director.wave;
+        wave.value = director.wave;
+        _showBanner(director.isTitanWave
+            ? '⛰  TITAN WAVE ${director.wave}'
+            : 'WAVE ${director.wave}');
+        if (director.wave == 10) _grantTrial('wave_10');
+        if (director.wave == 20) _grantTrial('wave_20');
+      }
+    }
+
+    // Flame-ring continuous clear + advance every threat.
     final threatDt = _slowTimer > 0 ? dt * 0.45 : dt;
     for (final t in threats) {
       t.update(t.isAlive ? threatDt : dt);
@@ -160,6 +193,10 @@ class ArenaWorld {
         _onReachedCore(t);
       }
     }
+
+    // Ricochet: a repelled threat flying outward smashes incoming hostiles it
+    // passes through — a satisfying chain reaction worth bonus points.
+    _resolveRicochets();
 
     // Reap finished threats
     threats.removeWhere((t) {
@@ -284,9 +321,11 @@ class ArenaWorld {
       _perfectThisRun += 1;
       if (_perfectThisRun == 10) _grantTrial('perfect_10');
       Haptics.perfect();
+      _addShake(6);
     } else if (!fromUlt) {
       Haptics.parry();
     }
+    if (t.kind == ThreatKind.titan) _addShake(9);
 
     if (!fromUlt) wrath.add(perfect ? _wrathPerParry * 1.6 : _wrathPerParry);
 
@@ -307,6 +346,7 @@ class ArenaWorld {
   void _onReachedCore(Threat t) {
     if (t.kind == ThreatKind.blessing) {
       t.collect();
+      _tutBlessings += 1;
       if (guard.value < _guardCapacity) guard.value += 1;
       _addScore(0, t.positionFrom(centre), AegisAccentless.blessing,
           label: '+GUARD');
@@ -321,16 +361,113 @@ class ArenaWorld {
       return;
     }
 
-    // Hostile reached the core — guard break.
+    // Hostile reached the core.
     t.expire();
     _streak = 0;
     streak.value = 0;
+
+    // In the tutorial nothing can hurt you — it simply respawns next frame.
+    if (tutorial) return;
+
+    // Guard break.
     _waveDamaged = true;
     guard.value -= 1;
     Haptics.wound();
+    _addShake(8);
     if (guard.value <= 0) {
       _end();
     }
+  }
+
+  void _addShake(double amount) {
+    _shake = (_shake + amount).clamp(0, 16);
+  }
+
+  /// Repelled threats flying outward destroy incoming hostiles they overlap.
+  void _resolveRicochets() {
+    final outgoing =
+        threats.where((t) => t.phase == ThreatPhase.repelled && !t.isBlessing);
+    for (final o in outgoing) {
+      final op = o.positionFrom(centre);
+      for (final t in threats) {
+        if (!t.isAlive || t.isBlessing) continue;
+        if (op.distanceTo(t.positionFrom(centre)) <= o.drawRadius + t.drawRadius) {
+          t.repel();
+          _repelsThisRun += 1;
+          score.value += 15;
+          _addScore(0, t.positionFrom(centre), AegisAccentless.goldBright,
+              label: 'COMBO +15');
+          _addShake(4);
+        }
+      }
+    }
+  }
+
+  // ── Tutorial state machine ────────────────────────────────────────────────────
+
+  void _spawnTutorialBoulder() {
+    threats.add(Threat(
+      kind: ThreatKind.boulder,
+      bearing: _rng.nextDouble() * math.pi * 2,
+      radius: arenaRadius,
+      speed: 58,
+      drawRadius: 34,
+      variant: _rng.nextInt(5),
+      spin: (_rng.nextDouble() - 0.5) * 2,
+    ));
+  }
+
+  void _spawnTutorialBlessing() {
+    threats.add(Threat(
+      kind: ThreatKind.blessing,
+      bearing: _rng.nextDouble() * math.pi * 2,
+      radius: arenaRadius,
+      speed: 64,
+      drawRadius: 24,
+    ));
+  }
+
+  void _updateTutorial(double dt) {
+    final live = threats.where((t) => t.isAlive).length;
+    switch (_tutPhase) {
+      case 0:
+        tutorialHint.value = '👉  Swipe toward the ROCK to push it away!';
+        if (live == 0 && _repelsThisRun < 1) _spawnTutorialBoulder();
+        if (_repelsThisRun >= 1) _tutPhase = 1;
+        break;
+      case 1:
+        tutorialHint.value = '✨  Push when it is CLOSE for a PERFECT!';
+        if (live == 0 && _repelsThisRun < 2) _spawnTutorialBoulder();
+        if (_repelsThisRun >= 2) _tutPhase = 2;
+        break;
+      case 2:
+        tutorialHint.value = '💚  This is a GIFT — do NOT push! Let it reach you.';
+        if (live == 0 && _tutBlessings < 1) _spawnTutorialBlessing();
+        if (_tutBlessings >= 1) {
+          _tutPhase = 3;
+          _tutTimer = 0;
+        }
+        break;
+      case 3:
+        tutorialHint.value = '⚡  Every push fills your POWER. Fill it for a blast!';
+        _tutTimer += dt;
+        if (_tutTimer > 3.2) {
+          _tutPhase = 4;
+          _tutTimer = 0;
+        }
+        break;
+      default:
+        tutorialHint.value = '🎉  You are ready! Defend Olympus!';
+        _tutTimer += dt;
+        if (_tutTimer > 2.2) _finishTutorial();
+    }
+  }
+
+  void _finishTutorial() {
+    if (tutorialFinished) return;
+    tutorialFinished = true;
+    tutorialHint.value = null;
+    onTutorialDone?.call();
   }
 
   List<Threat> _nearestHostiles(int n) {
@@ -412,6 +549,8 @@ class ArenaWorld {
     _flameTimer = 0;
     ultPulse = 0;
     lastUlt = null;
+    _shake = 0;
+    shakeOffset = Offset.zero;
 
     score.value = 0;
     wave.value = 1;
@@ -437,6 +576,7 @@ class ArenaWorld {
     wrathValue.dispose();
     wrathReady.dispose();
     banner.dispose();
+    tutorialHint.dispose();
     frame.dispose();
   }
 }

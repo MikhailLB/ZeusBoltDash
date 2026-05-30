@@ -1,4 +1,6 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import '../../core/engine/game_loop.dart';
 import '../../core/storage/profile_store.dart';
@@ -13,7 +15,10 @@ import 'arena_hud.dart';
 /// the [ArenaWorld] parry system, and layers the background art, the painter,
 /// the deity figure and the HUD.
 class ArenaScreen extends StatefulWidget {
-  const ArenaScreen({super.key});
+  const ArenaScreen({super.key, this.tutorial = false});
+
+  /// When true, runs the gentle scripted tutorial then hands off to Sanctuary.
+  final bool tutorial;
 
   @override
   State<ArenaScreen> createState() => _ArenaScreenState();
@@ -34,8 +39,44 @@ class _ArenaScreenState extends State<ArenaScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _world = ArenaWorld()..onGameOver = _onGameOver;
+    _world = ArenaWorld(tutorial: widget.tutorial)
+      ..onGameOver = _onGameOver
+      ..onTutorialDone = _onTutorialDone;
     _loop = GameLoop(vsync: this, onTick: _world.update);
+    _loadSprites();
+  }
+
+  Future<void> _loadSprites() async {
+    Future<ui.Image> decode(String asset) async {
+      final data = await rootBundle.load(asset);
+      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      return (await codec.getNextFrame()).image;
+    }
+
+    try {
+      final rocks = await Future.wait([
+        for (final n in const [
+          'rock_01_asset', 'rock_02_asset', 'rock_03_asset',
+          'rock_04_asset', 'rock_05_asset'
+        ])
+          decode('assets/game_assets/$n.webp'),
+      ]);
+      final bolts = await Future.wait([
+        for (final n in const [
+          'lightning_01_asset', 'lightning_02_asset',
+          'lightning_03_asset', 'lightning_04_asset'
+        ])
+          decode('assets/game_assets/$n.webp'),
+      ]);
+      if (!mounted) return;
+      _world.rockImages = rocks;
+      _world.boltImages = bolts;
+    } catch (_) {/* fall back to painted shapes */}
+  }
+
+  void _onTutorialDone() {
+    _loop.stop();
+    if (mounted) Navigator.of(context).pushReplacementNamed('/sanctuary');
   }
 
   @override
@@ -55,12 +96,14 @@ class _ArenaScreenState extends State<ArenaScreen>
 
   void _onGameOver() {
     _loop.stop();
+    _world.shakeOffset = Offset.zero;
     setState(() => _gameOver = true);
   }
 
   void _pause() {
     if (_gameOver) return;
     _world.isPaused = true;
+    _world.shakeOffset = Offset.zero;
     _loop.pause();
     setState(() => _paused = true);
   }
@@ -113,7 +156,11 @@ class _ArenaScreenState extends State<ArenaScreen>
             behavior: HitTestBehavior.opaque,
             onPanStart: _onPanStart,
             onPanUpdate: _onPanUpdate,
-            child: Stack(
+            child: AnimatedBuilder(
+              animation: _world.frame,
+              builder: (_, child) =>
+                  Transform.translate(offset: _world.shakeOffset, child: child),
+              child: Stack(
               children: [
                 // Background arena art.
                 Positioned.fill(
@@ -126,7 +173,7 @@ class _ArenaScreenState extends State<ArenaScreen>
                 ),
                 // Darkening veil so the painted layer reads clearly.
                 Positioned.fill(
-                  child: Container(color: Colors.black.withValues(alpha: 0.28)),
+                  child: Container(color: Colors.black.withValues(alpha: 0.22)),
                 ),
                 // The dynamic simulation layer.
                 Positioned.fill(child: CustomPaint(painter: ArenaPainter(_world))),
@@ -144,8 +191,10 @@ class _ArenaScreenState extends State<ArenaScreen>
                 ArenaHud(world: _world, onPause: _pause),
 
                 if (_paused) _PauseOverlay(onResume: _resume, onQuit: _quit),
-                if (_gameOver) _GameOverOverlay(world: _world, onRetry: _restart, onQuit: _quit),
+                if (_gameOver)
+                  _GameOverOverlay(world: _world, onRetry: _restart, onQuit: _quit),
               ],
+              ),
             ),
           );
         },
@@ -154,7 +203,11 @@ class _ArenaScreenState extends State<ArenaScreen>
   }
 
   void _quit() {
-    Navigator.of(context).pop();
+    if (widget.tutorial) {
+      Navigator.of(context).pushReplacementNamed('/sanctuary');
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 }
 

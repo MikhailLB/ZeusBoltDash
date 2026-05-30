@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import '../../core/storage/profile_store.dart';
 import '../../core/system/orientation.dart' as orient;
 import '../../theme/aegis_palette.dart';
+import '../codex/codex_screen.dart';
 
 /// Boot / loading screen. The only screen permitted in landscape so the
 /// full-bleed intro video can play in either orientation; it locks back to
@@ -102,7 +103,14 @@ class _BootScreenState extends State<BootScreen>
     await orient.Orientation.lockPortrait();
     await Future.delayed(const Duration(milliseconds: 320));
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/sanctuary');
+    // First launch ever → show the child-friendly Codex, then the tutorial.
+    if (ProfileStore.instance.profile.seenCodex) {
+      Navigator.of(context).pushReplacementNamed('/sanctuary');
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const CodexScreen(firstRun: true)),
+      );
+    }
   }
 
   @override

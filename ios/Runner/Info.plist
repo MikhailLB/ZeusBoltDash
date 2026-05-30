@@ -24,8 +24,6 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationCategoryType</key>
@@ -34,22 +32,9 @@
 	<array>
 		<string>https</string>
 		<string>http</string>
-		<string>tel</string>
-		<string>mailto</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoadsInWebContent</key>
-		<true/>
-	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Zeus Bolt Dash uses your camera to capture and share your highest score achievements with other players.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We save your champion screenshots and lightning-fast score records to your library so you can share them.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Zeus Bolt Dash uses this identifier to personalise bolt challenges and seasonal lightning tournaments for your skill level.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -73,11 +58,6 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-		<string>remote-notification</string>
-	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

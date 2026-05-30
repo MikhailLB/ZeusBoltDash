@@ -53,6 +53,11 @@ class Threat {
   /// Visual radius in pixels.
   final double drawRadius;
 
+  /// Art variant index (e.g. which rock/bolt sprite to draw) and a fixed
+  /// spin so each instance looks distinct.
+  final int variant;
+  final double spin;
+
   ThreatPhase phase = ThreatPhase.incoming;
 
   /// Animation timer used while playing out repelled/collected/expired.
@@ -70,6 +75,8 @@ class Threat {
     this.weavePhaseSpeed = 0,
     this.hp = 1,
     this.drawRadius = 26,
+    this.variant = 0,
+    this.spin = 0,
   });
 
   bool get isBlessing =>

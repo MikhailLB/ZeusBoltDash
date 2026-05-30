@@ -77,7 +77,9 @@ class WaveDirector {
           bearing: bearing,
           radius: arenaRadius,
           speed: (118 + wave * 7) * 1.0,
-          drawRadius: 30,
+          drawRadius: 32,
+          variant: _rng.nextInt(5),
+          spin: (_rng.nextDouble() - 0.5) * 2.4,
         );
       case ThreatKind.darkBolt:
         return Threat(
@@ -85,7 +87,8 @@ class WaveDirector {
           bearing: bearing,
           radius: arenaRadius,
           speed: (185 + wave * 9) * 1.0,
-          drawRadius: 18,
+          drawRadius: 22,
+          variant: _rng.nextInt(4),
         );
       case ThreatKind.shade:
         return Threat(

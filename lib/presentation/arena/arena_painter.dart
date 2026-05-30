@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../domain/threats/threat.dart';
@@ -19,6 +20,7 @@ class ArenaPainter extends CustomPainter {
     final acc = world.deity.accent;
 
     _drawGuardRing(canvas, c, acc);
+    _drawDeityAura(canvas, c, acc);
     if (world.flameActive) _drawFlameRing(canvas, c);
     if (world.slowActive) _drawSlowVeil(canvas, size);
 
@@ -107,11 +109,28 @@ class ArenaPainter extends CustomPainter {
 
     switch (t.kind) {
       case ThreatKind.boulder:
-        _blob(canvas, p, t.drawRadius * scale, const Color(0xFF8A6A4A),
-            const Color(0xFF4A3524), alpha);
+        if (world.rockImages.isNotEmpty) {
+          final img = world.rockImages[t.variant % world.rockImages.length];
+          final rot = world.frame.value * 0.012 * t.spin;
+          _sprite(canvas, img, p, t.drawRadius * scale * 1.15, rot, alpha);
+        } else {
+          _blob(canvas, p, t.drawRadius * scale, const Color(0xFF8A6A4A),
+              const Color(0xFF4A3524), alpha);
+        }
         break;
       case ThreatKind.darkBolt:
-        _dart(canvas, p, t.displayBearing, t.drawRadius * scale, alpha);
+        if (world.boltImages.isNotEmpty) {
+          final img = world.boltImages[t.variant % world.boltImages.length];
+          // Red menace glow behind, then the bolt sprite aimed inward.
+          final glow = Paint()
+            ..color = AegisPalette.menaceGlow.withValues(alpha: 0.45 * alpha)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+          canvas.drawCircle(p, t.drawRadius * scale, glow);
+          _sprite(canvas, img, p, t.drawRadius * scale * 1.7,
+              t.displayBearing + math.pi / 2, alpha);
+        } else {
+          _dart(canvas, p, t.displayBearing, t.drawRadius * scale, alpha);
+        }
         break;
       case ThreatKind.shade:
         _shade(canvas, p, t.drawRadius * scale, alpha);
@@ -216,6 +235,22 @@ class ArenaPainter extends CustomPainter {
     }
   }
 
+  /// Draws a decoded asset image centred at [p], scaled to [radius] and
+  /// rotated by [rotation], with [alpha] opacity.
+  void _sprite(Canvas canvas, ui.Image img, Offset p, double radius,
+      double rotation, double alpha) {
+    final src = Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble());
+    final dst = Rect.fromCenter(center: Offset.zero, width: radius * 2, height: radius * 2);
+    canvas.save();
+    canvas.translate(p.dx, p.dy);
+    canvas.rotate(rotation);
+    final paint = Paint()
+      ..filterQuality = FilterQuality.medium
+      ..color = Colors.white.withValues(alpha: alpha);
+    canvas.drawImageRect(img, src, dst, paint);
+    canvas.restore();
+  }
+
   void _orb(Canvas canvas, Offset p, double r, Color color, double alpha) {
     final glow = Paint()
       ..color = color.withValues(alpha: 0.5 * alpha)
@@ -228,19 +263,71 @@ class ArenaPainter extends CustomPainter {
     canvas.drawCircle(p, r, body);
   }
 
-  // ── Parry flash arc ──────────────────────────────────────────────────────────
+  // ── Parry flash: a bold directional aegis burst ───────────────────────────────
   void _drawParryFlash(Canvas canvas, Offset c, ParryFlash f, Color acc) {
     final progress = (f.t / 0.32).clamp(0.0, 1.0);
     final alpha = (1 - progress);
     final color = f.perfect ? AegisPalette.goldBright : acc;
-    final sweep = (f.perfect ? 1.0 : 0.7);
-    final paint = Paint()
+    final sweep = f.perfect ? 1.5 : 1.1; // much wider, clearly visible shield
+
+    // 1) Big soft glow arc (the "aura").
+    final glowArc = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = (f.perfect ? 9 : 6) * (1 - progress * 0.4)
-      ..color = color.withValues(alpha: alpha);
+      ..strokeWidth = (f.perfect ? 30 : 22) * (1 - progress * 0.3)
+      ..color = color.withValues(alpha: 0.45 * alpha)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
     final rect = Rect.fromCircle(center: c, radius: world.parryRadius);
-    canvas.drawArc(rect, f.angle - sweep / 2, sweep, false, paint);
+    canvas.drawArc(rect, f.angle - sweep / 2, sweep, false, glowArc);
+
+    // 2) Crisp bright arc on top.
+    final coreArc = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = (f.perfect ? 12 : 8) * (1 - progress * 0.35)
+      ..color = Colors.white.withValues(alpha: 0.9 * alpha);
+    canvas.drawArc(rect, f.angle - sweep / 2, sweep, false, coreArc);
+
+    // 3) Expanding shockwave ring in the parry direction.
+    final waveR = world.parryRadius + progress * 70;
+    final dir = Offset(math.cos(f.angle), math.sin(f.angle));
+    final wavePos = c + dir * waveR;
+    final wave = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4 * alpha
+      ..color = color.withValues(alpha: 0.8 * alpha);
+    canvas.drawCircle(wavePos, (f.perfect ? 26 : 18) * (0.5 + progress), wave);
+
+    // 4) Radiating spokes for extra punch on perfects.
+    if (f.perfect) {
+      final spoke = Paint()
+        ..strokeWidth = 3 * alpha
+        ..strokeCap = StrokeCap.round
+        ..color = AegisPalette.goldBright.withValues(alpha: 0.7 * alpha);
+      for (int i = -2; i <= 2; i++) {
+        final a = f.angle + i * 0.16;
+        final p1 = c + Offset(math.cos(a), math.sin(a)) * (world.parryRadius - 16);
+        final p2 = c + Offset(math.cos(a), math.sin(a)) * (world.parryRadius + 28 + progress * 30);
+        canvas.drawLine(p1, p2, spoke);
+      }
+    }
+  }
+
+  /// A soft, ever-present aura around the deity so the protective field is
+  /// always readable.
+  void _drawDeityAura(Canvas canvas, Offset c, Color acc) {
+    final t = (world.frame.value % 90) / 90.0;
+    final pulse = 0.5 + 0.5 * math.sin(t * math.pi * 2);
+    final aura = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          acc.withValues(alpha: 0.0),
+          acc.withValues(alpha: 0.10 + pulse * 0.10),
+          acc.withValues(alpha: 0.0),
+        ],
+        stops: const [0.55, 0.82, 1.0],
+      ).createShader(Rect.fromCircle(center: c, radius: world.coreRadius * 2.4));
+    canvas.drawCircle(c, world.coreRadius * 2.4, aura);
   }
 
   void _drawUltPulse(Canvas canvas, Offset c, Color acc) {
