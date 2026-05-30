@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -9,12 +10,17 @@ import 'lightning_component.dart';
 import 'rock_component.dart';
 import 'coin_component.dart';
 import 'special_coin_component.dart';
+import 'ambrosia_component.dart';
 
 class ZeusComponent extends PositionComponent
     with HasGameReference<ZeusBoltDashGame>, CollisionCallbacks {
   double _targetX = 0;
   bool _isDamaged = false;
   double _damageFlash = 0;
+
+  // Power surge glow state
+  bool _surgeActive = false;
+  double _surgeGlowPhase = 0;
 
   static const double zeusWidth = 80.0;
   static const double zeusHeight = 160.0;
@@ -26,7 +32,6 @@ class ZeusComponent extends PositionComponent
           anchor: Anchor.bottomCenter,
         );
 
-  /// Maps skin id → asset path inside assets/
   static String skinAsset(String skinId) {
     switch (skinId) {
       case 'poseidon':
@@ -52,6 +57,19 @@ class ZeusComponent extends PositionComponent
       size: Vector2(size.x * 0.85, size.y * 0.6),
       position: Vector2(size.x * 0.075, size.y * 0.3),
     ));
+
+    // Listen for power ready state
+    game.powerReadyNotifier.addListener(_onPowerStateChange);
+  }
+
+  @override
+  void onRemove() {
+    game.powerReadyNotifier.removeListener(_onPowerStateChange);
+    super.onRemove();
+  }
+
+  void _onPowerStateChange() {
+    _surgeActive = game.powerReadyNotifier.value;
   }
 
   void moveTo(double x) {
@@ -62,7 +80,6 @@ class ZeusComponent extends PositionComponent
   void update(double dt) {
     super.update(dt);
 
-    // Smooth horizontal follow
     final dx = _targetX - position.x;
     position.x += dx * dt * 20;
     position.x = position.x.clamp(size.x / 2, game.size.x - size.x / 2);
@@ -74,16 +91,42 @@ class ZeusComponent extends PositionComponent
         _damageFlash = 0;
       }
     }
+
+    if (_surgeActive) {
+      _surgeGlowPhase += dt * 3.5;
+    }
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+
+    // Power-ready golden glow around character
+    if (_surgeActive) {
+      final glow = (sin(_surgeGlowPhase) * 0.5 + 0.5);
+      canvas.drawRect(
+        Rect.fromLTWH(-6, -6, size.x + 12, size.y + 12),
+        Paint()
+          ..color =
+              const Color(0xFFFFD700).withOpacity(0.08 + glow * 0.14)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+      );
+      // Thin golden border
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, size.x, size.y),
+        Paint()
+          ..color = const Color(0xFFFFD700).withOpacity(0.35 + glow * 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5,
+      );
+    }
+
     if (_isDamaged) {
       final opacity = ((0.5 - _damageFlash) * 0.8).clamp(0.0, 0.4);
       canvas.drawRect(
         Rect.fromLTWH(0, 0, size.x, size.y),
-        Paint()..color = Colors.red.withAlpha((opacity * 255).toInt()),
+        Paint()
+          ..color = Colors.red.withAlpha((opacity * 255).toInt()),
       );
     }
   }
@@ -93,7 +136,6 @@ class ZeusComponent extends PositionComponent
     _damageFlash = 0;
   }
 
-  /// Resolves hitbox → parent component to handle Flame's collision model
   T? _resolve<T>(PositionComponent other) {
     if (other is T) return other as T;
     if (other.parent is T) return other.parent as T;
@@ -110,10 +152,13 @@ class ZeusComponent extends PositionComponent
       final center = position + Vector2(0, -size.y / 2);
       lightning.onCaught();
       game.onLightningCaught(lightning.lightningType);
+      final combo = game.comboMultiplier;
+      final comboLabel =
+          combo > 1 ? ' x$combo' : '';
       game.world.add(CollectEffect(
         position: center,
         color: lightning.lightningType.glowColor,
-        label: '+${lightning.lightningType.points}',
+        label: '+${lightning.lightningType.points}$comboLabel',
       ));
       return;
     }
@@ -157,6 +202,19 @@ class ZeusComponent extends PositionComponent
         label: '⚡ COIN MODE!',
       ));
       game.world.add(CoinModeRippleEffect(center: center));
+      return;
+    }
+
+    final ambrosia = _resolve<AmbrosiaComponent>(other);
+    if (ambrosia != null && !ambrosia.isCaught) {
+      final center = position + Vector2(0, -size.y / 2);
+      ambrosia.onCaught();
+      game.onAmbrosiaCaught();
+      game.world.add(CollectEffect(
+        position: center,
+        color: const Color(0xFF7BFFF8),
+        label: '🏺 +LIFE',
+      ));
     }
   }
 }

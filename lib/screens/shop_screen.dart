@@ -150,59 +150,95 @@ class _ShopScreenState extends State<ShopScreen>
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
+        top: MediaQuery.of(context).padding.top + 14,
         left: 16,
         right: 16,
-        bottom: 12,
+        bottom: 14,
       ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A0A40), Color(0xFF0A0520)],
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2A0A60), Color(0xFF1A0A40), Color(0xFF0A0520)],
         ),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFD4A017), width: 1),
+        border: const Border(
+          bottom: BorderSide(color: Color(0xFFD4A017), width: 1.5),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD4A017).withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
+          // Back button with Greek style
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFF2A1A50),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF6A5A90)),
+                color: const Color(0xFF1A0A40),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFD4A017)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD4A017).withValues(alpha: 0.2),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
-              child: const Icon(Icons.arrow_back,
-                  color: Color(0xFFD4A017), size: 20),
+              child: const Icon(Icons.arrow_back_ios_new,
+                  color: Color(0xFFFFD700), size: 18),
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            'SHOP',
-            style: GoogleFonts.cinzel(
-              color: const Color(0xFFFFD700),
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 3,
-            ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'TREASURY',
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFFFD700),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 3,
+                ),
+              ),
+              Text(
+                'of mount olympus',
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFAA8840),
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
           ),
           const Spacer(),
+          // Coin display with glow
           Container(
             padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A1A50),
-              borderRadius: BorderRadius.circular(20),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3A2A00), Color(0xFF1A1400)],
+              ),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(color: const Color(0xFFD4A017)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                  blurRadius: 10,
+                ),
+              ],
             ),
             child: Row(
               children: [
-                const Icon(Icons.monetization_on,
-                    color: Color(0xFFFFD700), size: 18),
+                const Text('🪙', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
                 Text(
                   '$_coins',

@@ -38,6 +38,8 @@ class _GameScreenState extends State<GameScreen> {
                 _GameOverOverlay(game: game as ZeusBoltDashGame),
             'pause': (context, game) =>
                 _PauseOverlay(game: game as ZeusBoltDashGame),
+            'surgePulse': (context, game) =>
+                _SurgePulseOverlay(game: game as ZeusBoltDashGame),
           },
           initialActiveOverlays: const ['hud'],
         ),
@@ -46,134 +48,422 @@ class _GameScreenState extends State<GameScreen> {
   }
 }
 
-class _GameOverOverlay extends StatelessWidget {
-  final ZeusBoltDashGame game;
+// ── Olympus Surge ready overlay ─────────────────────────────────────────────
 
-  const _GameOverOverlay({required this.game});
+class _SurgePulseOverlay extends StatefulWidget {
+  final ZeusBoltDashGame game;
+  const _SurgePulseOverlay({required this.game});
+
+  @override
+  State<_SurgePulseOverlay> createState() => _SurgePulseOverlayState();
+}
+
+class _SurgePulseOverlayState extends State<_SurgePulseOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glow;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _glow = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: 0.92, end: 1.08)
+        .animate(CurvedAnimation(parent: _glow, curve: Curves.easeInOut));
+    _opacity = Tween<double>(begin: 0.7, end: 1.0)
+        .animate(CurvedAnimation(parent: _glow, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _glow.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final highScore = StorageService.instance.getHighScore();
-    final score = game.scoreNotifier.value;
-    final isRecord = score >= highScore && score > 0;
-
-    return Container(
-      color: Colors.black.withOpacity(0.75),
-      child: Center(
-        child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF1A0A40), Color(0xFF0D0530)],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFD4A017),
-              width: 2.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFD4A017).withOpacity(0.4),
-                blurRadius: 30,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'GAME OVER',
-                style: GoogleFonts.cinzel(
-                  color: const Color(0xFFFF4444),
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 3,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Divider(color: Color(0xFFD4A017), thickness: 1),
-              const SizedBox(height: 16),
-              if (isRecord)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 5),
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD4A017).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFD4A017)),
-                  ),
-                  child: Text(
-                    '🏆 NEW RECORD!',
-                    style: GoogleFonts.cinzel(
-                      color: const Color(0xFFFFD700),
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 72),
+          child: AnimatedBuilder(
+            animation: _glow,
+            builder: (_, __) {
+              return Transform.scale(
+                scale: _scale.value,
+                child: Opacity(
+                  opacity: _opacity.value,
+                  child: GestureDetector(
+                    onTap: () => widget.game.activateOlympusSurge(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFD4A017),
+                            Color(0xFFFF8C00),
+                            Color(0xFFD4A017),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        border:
+                            Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD700)
+                                .withOpacity(0.6 * _glow.value),
+                            blurRadius: 24,
+                            spreadRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('⚡', style: TextStyle(fontSize: 22)),
+                          const SizedBox(width: 8),
+                          Text(
+                            'OLYMPUS SURGE',
+                            style: GoogleFonts.cinzel(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('⚡', style: TextStyle(fontSize: 22)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              _statRow('SCORE', '$score', const Color(0xFFFFEB3B)),
-              const SizedBox(height: 8),
-              _statRow('BEST', '$highScore', const Color(0xFFD4A017)),
-              const SizedBox(height: 8),
-              _statRow(
-                'COINS',
-                '${game.coinsNotifier.value} 🪙',
-                const Color(0xFFFFD700),
-              ),
-              const SizedBox(height: 24),
-              _buildButton(
-                label: 'PLAY AGAIN',
-                icon: Icons.replay,
-                color: const Color(0xFF1A6B8A),
-                onTap: () => game.resetGame(),
-              ),
-              const SizedBox(height: 12),
-              _buildButton(
-                label: 'MENU',
-                icon: Icons.home,
-                color: const Color(0xFF2A1A50),
-                onTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/menu',
-                  (route) => false,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Game over overlay ────────────────────────────────────────────────────────
+
+class _GameOverOverlay extends StatefulWidget {
+  final ZeusBoltDashGame game;
+  const _GameOverOverlay({required this.game});
+
+  @override
+  State<_GameOverOverlay> createState() => _GameOverOverlayState();
+}
+
+class _GameOverOverlayState extends State<_GameOverOverlay>
+    with TickerProviderStateMixin {
+  late final AnimationController _entrance;
+  late final AnimationController _counter;
+  late final Animation<double> _scaleIn;
+  late final Animation<double> _fadeIn;
+
+  int _displayedScore = 0;
+  late final int _finalScore;
+  late final int _highScore;
+  late final bool _isRecord;
+
+  @override
+  void initState() {
+    super.initState();
+    _finalScore = widget.game.scoreNotifier.value;
+    _highScore = StorageService.instance.getHighScore();
+    _isRecord = _finalScore >= _highScore && _finalScore > 0;
+
+    _entrance = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _scaleIn = CurvedAnimation(parent: _entrance, curve: Curves.elasticOut);
+    _fadeIn = CurvedAnimation(parent: _entrance, curve: Curves.easeOut);
+
+    // Score counter: 900ms duration
+    _counter = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _counter.addListener(() {
+      final v = (_counter.value * _finalScore).round();
+      if (mounted) setState(() => _displayedScore = v);
+    });
+
+    _entrance.forward().then((_) => _counter.forward());
+  }
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    _counter.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bestCombo = StorageService.instance.loadPlayerData().bestCombo;
+
+    return Container(
+      color: Colors.black.withValues(alpha: 0.78),
+      child: Center(
+        child: ScaleTransition(
+          scale: _scaleIn,
+          child: FadeTransition(
+            opacity: _fadeIn,
+            child: Container(
+              width: 318,
+              padding: const EdgeInsets.fromLTRB(26, 24, 26, 26),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF1E0D48), Color(0xFF0A0430)],
                 ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                    color: const Color(0xFFD4A017), width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD4A017).withValues(alpha: 0.4),
+                    blurRadius: 36,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Header ───────────────────────────────────────
+                  _buildHeader(),
+                  const SizedBox(height: 18),
+
+                  // ── Score counter ─────────────────────────────────
+                  _buildScoreCounter(),
+
+                  const SizedBox(height: 12),
+                  _divider(),
+                  const SizedBox(height: 14),
+
+                  // ── Stats grid ────────────────────────────────────
+                  _statsGrid(bestCombo),
+
+                  const SizedBox(height: 20),
+
+                  // ── Buttons ───────────────────────────────────────
+                  _goBtn(
+                    label: 'PLAY AGAIN',
+                    emoji: '⚡',
+                    color: const Color(0xFF0F5C78),
+                    onTap: () => widget.game.resetGame(),
+                  ),
+                  const SizedBox(height: 10),
+                  _goBtn(
+                    label: 'MAIN MENU',
+                    emoji: '🏛️',
+                    color: const Color(0xFF1E104A),
+                    onTap: () =>
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/menu',
+                      (r) => false,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _statRow(String label, String value, Color valueColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        if (_isRecord)
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF7A4A00), Color(0xFFD4A017)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD4A017).withValues(alpha: 0.45),
+                  blurRadius: 14,
+                )
+              ],
+            ),
+            child: Text(
+              '🏆  NEW RECORD!',
+              style: GoogleFonts.cinzel(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 28,
+              height: 2,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.transparent, Color(0xFFFF4444)],
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'GAME OVER',
+              style: GoogleFonts.cinzel(
+                color: const Color(0xFFFF4444),
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 3,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              width: 28,
+              height: 2,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFF4444), Colors.transparent],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScoreCounter() {
+    return Column(
       children: [
         Text(
-          label,
+          'SCORE',
           style: GoogleFonts.cinzel(
-            color: const Color(0xFFCCBBFF),
-            fontSize: 13,
+            color: Colors.white.withValues(alpha: 0.5),
+            fontSize: 11,
+            letterSpacing: 2,
           ),
         ),
+        const SizedBox(height: 4),
         Text(
-          value,
+          '$_displayedScore',
           style: GoogleFonts.cinzel(
-            color: valueColor,
-            fontSize: 16,
+            color: const Color(0xFFFFEB3B),
+            fontSize: 46,
             fontWeight: FontWeight.bold,
+            height: 1.1,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildButton({
+  Widget _divider() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.transparent, Color(0xFFD4A017)],
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Icon(Icons.bolt,
+              color: const Color(0xFFD4A017).withValues(alpha: 0.7),
+              size: 16),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFD4A017), Colors.transparent],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _statsGrid(int bestCombo) {
+    return Row(
+      children: [
+        _statCell('BEST', '$_highScore', const Color(0xFFD4A017)),
+        _vDivider(),
+        _statCell(
+          'COINS',
+          '${widget.game.coinsNotifier.value}🪙',
+          const Color(0xFFFFD700),
+        ),
+        _vDivider(),
+        _statCell('COMBO', '×$bestCombo', const Color(0xFFFF8C00)),
+      ],
+    );
+  }
+
+  Widget _statCell(String label, String value, Color valueColor) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: GoogleFonts.cinzel(
+              color: valueColor,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.cinzel(
+              color: Colors.white.withValues(alpha: 0.45),
+              fontSize: 10,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _vDivider() {
+    return Container(
+      width: 1,
+      height: 36,
+      color: const Color(0xFFD4A017).withValues(alpha: 0.3),
+    );
+  }
+
+  Widget _goBtn({
     required String label,
-    required IconData icon,
+    required String emoji,
     required Color color,
     required VoidCallback onTap,
   }) {
@@ -181,24 +471,24 @@ class _GameOverOverlay extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [color, Color.lerp(color, Colors.black, 0.4)!],
+            colors: [color, Color.lerp(color, Colors.black, 0.38)!],
           ),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFD4A017)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFFFFD700), size: 20),
-            const SizedBox(width: 8),
+            Text(emoji, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 10),
             Text(
               label,
               style: GoogleFonts.cinzel(
-                color: const Color(0xFFFFD700),
-                fontSize: 16,
+                color: Colors.white,
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2,
               ),
@@ -209,6 +499,8 @@ class _GameOverOverlay extends StatelessWidget {
     );
   }
 }
+
+// ── Pause overlay ────────────────────────────────────────────────────────────
 
 class _PauseOverlay extends StatelessWidget {
   final ZeusBoltDashGame game;

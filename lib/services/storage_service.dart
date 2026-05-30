@@ -25,6 +25,16 @@ class StorageService {
       vibrationEnabled: prefs.getBool('vibrationEnabled') ?? true,
       livesLevel: prefs.getInt('livesLevel') ?? 0,
       scoreLevel: prefs.getInt('scoreLevel') ?? 0,
+      gamesPlayed: prefs.getInt('gamesPlayed') ?? 0,
+      totalLightningsCaught: prefs.getInt('totalLightningsCaught') ?? 0,
+      bestCombo: prefs.getInt('bestCombo') ?? 0,
+      totalSurgesUsed: prefs.getInt('totalSurgesUsed') ?? 0,
+      totalAmbrosiaCollected: prefs.getInt('totalAmbrosiaCollected') ?? 0,
+      totalStormsSurvived: prefs.getInt('totalStormsSurvived') ?? 0,
+      unlockedAchievements:
+          (prefs.getString('unlockedAchievements') ?? '').isEmpty
+              ? []
+              : prefs.getString('unlockedAchievements')!.split(','),
     );
   }
 
@@ -38,6 +48,14 @@ class StorageService {
     await prefs.setBool('vibrationEnabled', data.vibrationEnabled);
     await prefs.setInt('livesLevel', data.livesLevel);
     await prefs.setInt('scoreLevel', data.scoreLevel);
+    await prefs.setInt('gamesPlayed', data.gamesPlayed);
+    await prefs.setInt('totalLightningsCaught', data.totalLightningsCaught);
+    await prefs.setInt('bestCombo', data.bestCombo);
+    await prefs.setInt('totalSurgesUsed', data.totalSurgesUsed);
+    await prefs.setInt('totalAmbrosiaCollected', data.totalAmbrosiaCollected);
+    await prefs.setInt('totalStormsSurvived', data.totalStormsSurvived);
+    await prefs.setString(
+        'unlockedAchievements', data.unlockedAchievements.join(','));
   }
 
   Future<void> updateHighScore(int score) async {
