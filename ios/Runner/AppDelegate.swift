@@ -8,16 +8,11 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-    _setupOrientationChannel()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  // ── Orientation channel ───────────────────────────────────────────────────
-  // Flutter calls "setPortrait" / "setAll" to force rotation on iPad iOS 16+.
-  private func _setupOrientationChannel() {
-    guard let controller = window?.rootViewController as? FlutterViewController
-    else { return }
-
+  // Called after the scene connects and the FlutterViewController is ready.
+  func setupOrientationChannel(with controller: FlutterViewController) {
     let channel = FlutterMethodChannel(
       name: "zbd/orientation",
       binaryMessenger: controller.binaryMessenger
@@ -60,14 +55,5 @@ import UIKit
       scene?.keyWindow?.rootViewController?
         .setNeedsUpdateOfSupportedInterfaceOrientations()
     }
-    // Below iOS 16 — SystemChrome.setPreferredOrientations is enough.
-  }
-
-  // Ensures SystemChrome.setPreferredOrientations works on iPad.
-  override func application(
-    _ application: UIApplication,
-    supportedInterfaceOrientationsFor window: UIWindow?
-  ) -> UIInterfaceOrientationMask {
-    return super.application(application, supportedInterfaceOrientationsFor: window)
   }
 }

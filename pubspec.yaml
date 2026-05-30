@@ -1,5 +1,5 @@
 name: zeus_bolt_dash
-description: Zeus Bolt Dash — Ancient Greek arcade catcher game.
+description: Olympus Aegis — a divine parry-defense arena built on a custom engine.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,13 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # ── White-part ────────────────────────────────────────────
-  flame: ^1.18.0
+  # First-party / low-risk plugins only. No game engine, no font fetcher,
+  # no audio plugin — the simulation, rendering and haptics are hand-rolled.
   shared_preferences: ^2.3.0
   video_player: ^2.9.1
-  vibration: ^2.0.0
-  google_fonts: ^6.2.1
-  audioplayers: ^6.1.0
   url_launcher: ^6.3.1
 
 dev_dependencies:
@@ -47,3 +44,8 @@ flutter:
     - assets/Loading/
     - assets/Notifications/
     - assets/nowifi/
+
+  fonts:
+    - family: Cinzel
+      fonts:
+        - asset: assets/fonts/Cinzel.ttf
