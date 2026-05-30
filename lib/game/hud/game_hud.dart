@@ -19,7 +19,7 @@ class GameHud extends StatelessWidget {
             return Positioned.fill(
               child: IgnorePointer(
                 child: Container(
-                  color: const Color(0xFF7B00FF).withOpacity(0.08),
+                  color: const Color(0xFF7B00FF).withValues(alpha: 0.08),
                 ),
               ),
             );
@@ -33,7 +33,7 @@ class GameHud extends StatelessWidget {
             return Positioned.fill(
               child: IgnorePointer(
                 child: Container(
-                  color: const Color(0xFF42A5F5).withOpacity(0.07),
+                  color: const Color(0xFF42A5F5).withValues(alpha: 0.07),
                 ),
               ),
             );
@@ -93,6 +93,20 @@ class GameHud extends StatelessWidget {
                 right: 0,
                 child: _CoinModeBanner(game: game),
               ),
+              // ── Score milestone banner ────────────────────────────────────
+              Positioned(
+                top: 110,
+                left: 0,
+                right: 0,
+                child: _MilestoneBanner(game: game),
+              ),
+              // ── Chain lightning bonus ─────────────────────────────────────
+              Positioned(
+                top: 160,
+                left: 0,
+                right: 0,
+                child: _ChainBonusWidget(game: game),
+              ),
             ],
           ),
         ),
@@ -114,7 +128,7 @@ class _TopBar extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.black.withOpacity(0.6),
+            Colors.black.withValues(alpha: 0.6),
             Colors.transparent,
           ],
           begin: Alignment.topCenter,
@@ -153,9 +167,9 @@ class _TopBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: iconColor.withOpacity(0.6)),
+        border: Border.all(color: iconColor.withValues(alpha: 0.6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -192,9 +206,9 @@ class _HeartsDisplay extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.55),
+            color: Colors.black.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.red.withOpacity(0.5)),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -206,7 +220,7 @@ class _HeartsDisplay extends StatelessWidget {
                   i < remaining ? Icons.favorite : Icons.favorite_border,
                   color: i < remaining
                       ? Colors.red
-                      : Colors.red.withOpacity(0.3),
+                      : Colors.red.withValues(alpha: 0.3),
                   size: 22,
                 ),
               ),
@@ -233,12 +247,12 @@ class _MissedCounter extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.55),
+            color: Colors.black.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: danger
-                  ? Colors.red.withOpacity(0.8)
-                  : const Color(0xFFFFEB3B).withOpacity(0.5),
+                  ? Colors.red.withValues(alpha: 0.8)
+                  : const Color(0xFFFFEB3B).withValues(alpha: 0.5),
             ),
           ),
           child: Row(
@@ -333,7 +347,7 @@ class _PowerMeterWidgetState extends State<_PowerMeterWidget>
           style: GoogleFonts.cinzel(
             color: widget.ready
                 ? const Color(0xFFFFD700)
-                : Colors.white.withOpacity(0.55),
+                : Colors.white.withValues(alpha: 0.55),
             fontSize: 9,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5,
@@ -347,18 +361,18 @@ class _PowerMeterWidgetState extends State<_PowerMeterWidget>
               width: barW,
               height: barH,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.55),
+                color: Colors.black.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(5),
                 border: Border.all(
                   color: widget.ready
-                      ? const Color(0xFFFFD700).withOpacity(_glow.value)
-                      : Colors.white.withOpacity(0.3),
+                      ? const Color(0xFFFFD700).withValues(alpha: _glow.value)
+                      : Colors.white.withValues(alpha: 0.3),
                 ),
                 boxShadow: widget.ready
                     ? [
                         BoxShadow(
                           color: const Color(0xFFFFD700)
-                              .withOpacity(0.35 * _glow.value),
+                              .withValues(alpha: 0.35 * _glow.value),
                           blurRadius: 8,
                         ),
                       ]
@@ -426,8 +440,8 @@ class _ComboBadge extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _comboColor(mult).withOpacity(0.85),
-                  _comboColor(mult).withOpacity(0.55),
+                  _comboColor(mult).withValues(alpha: 0.85),
+                  _comboColor(mult).withValues(alpha: 0.55),
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
@@ -435,7 +449,7 @@ class _ComboBadge extends StatelessWidget {
                   color: _comboColor(mult), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: _comboColor(mult).withOpacity(0.45),
+                  color: _comboColor(mult).withValues(alpha: 0.45),
                   blurRadius: 10,
                 ),
               ],
@@ -519,8 +533,8 @@ class _StormBannerState extends State<_StormBanner>
                         horizontal: 18, vertical: 7),
                     decoration: BoxDecoration(
                       color: warning
-                          ? const Color(0xFF4A0080).withOpacity(opacity)
-                          : const Color(0xFF7B00FF).withOpacity(opacity),
+                          ? const Color(0xFF4A0080).withValues(alpha: opacity)
+                          : const Color(0xFF7B00FF).withValues(alpha: opacity),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: warning
@@ -531,7 +545,7 @@ class _StormBannerState extends State<_StormBanner>
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF7B00FF)
-                              .withOpacity(0.5 * _flash.value),
+                              .withValues(alpha: 0.5 * _flash.value),
                           blurRadius: 16,
                         ),
                       ],
@@ -580,12 +594,12 @@ class _CoinModeBanner extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF42A5F5).withOpacity(0.85),
+                      color: const Color(0xFF42A5F5).withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.white, width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF42A5F5).withOpacity(0.6),
+                          color: const Color(0xFF42A5F5).withValues(alpha: 0.6),
                           blurRadius: 12,
                         ),
                       ],
@@ -623,6 +637,166 @@ class _CoinModeBanner extends StatelessWidget {
   }
 }
 
+// ── Score milestone banner ────────────────────────────────────────────────
+
+class _MilestoneBanner extends StatefulWidget {
+  final ZeusBoltDashGame game;
+  const _MilestoneBanner({required this.game});
+
+  @override
+  State<_MilestoneBanner> createState() => _MilestoneBannerState();
+}
+
+class _MilestoneBannerState extends State<_MilestoneBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _scaleCtrl;
+  late final Animation<double> _scale;
+
+  String? _currentLabel;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _scale = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
+    widget.game.milestoneBannerNotifier.addListener(_onMilestone);
+  }
+
+  void _onMilestone() {
+    final label = widget.game.milestoneBannerNotifier.value;
+    if (label != null) {
+      setState(() => _currentLabel = label);
+      _scaleCtrl.forward(from: 0);
+    } else {
+      _scaleCtrl.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.game.milestoneBannerNotifier.removeListener(_onMilestone);
+    _scaleCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_currentLabel == null) return const SizedBox.shrink();
+    return Center(
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF7A4A00), Color(0xFFD4A017), Color(0xFF7A4A00)],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFFFD700), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFFD700).withValues(alpha: 0.55),
+                blurRadius: 20,
+                spreadRadius: 3,
+              ),
+            ],
+          ),
+          child: Text(
+            _currentLabel!,
+            style: GoogleFonts.cinzel(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Chain lightning bonus flash ────────────────────────────────────────────
+
+class _ChainBonusWidget extends StatefulWidget {
+  final ZeusBoltDashGame game;
+  const _ChainBonusWidget({required this.game});
+
+  @override
+  State<_ChainBonusWidget> createState() => _ChainBonusWidgetState();
+}
+
+class _ChainBonusWidgetState extends State<_ChainBonusWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim;
+  late final Animation<double> _fade;
+  int _bonus = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _fade = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
+    widget.game.chainBonusNotifier.addListener(_onChain);
+  }
+
+  void _onChain() {
+    final val = widget.game.chainBonusNotifier.value;
+    if (val > 0) {
+      setState(() => _bonus = val);
+      _anim.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.game.chainBonusNotifier.removeListener(_onChain);
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_bonus == 0) return const SizedBox.shrink();
+    return Center(
+      child: FadeTransition(
+        opacity: ReverseAnimation(_fade),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF00BFFF).withValues(alpha: 0.9),
+                const Color(0xFF0066FF).withValues(alpha: 0.9),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00AAFF).withValues(alpha: 0.6),
+                blurRadius: 14,
+              ),
+            ],
+          ),
+          child: Text(
+            '⚡ CHAIN! +$_bonus',
+            style: GoogleFonts.cinzel(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Pause button ──────────────────────────────────────────────────────────
 
 class _PauseButton extends StatelessWidget {
@@ -640,7 +814,7 @@ class _PauseButton extends StatelessWidget {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: Colors.black.withAlpha(140),
+          color: Colors.black.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFFD4A017), width: 1.5),
         ),

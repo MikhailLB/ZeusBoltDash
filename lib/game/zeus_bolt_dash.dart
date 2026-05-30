@@ -34,6 +34,19 @@ class ZeusBoltDashGame extends FlameGame with HasCollisionDetection {
   // ── Divine storm notifiers ────────────────────────────────────────────────
   final ValueNotifier<bool> stormActiveNotifier = ValueNotifier(false);
   final ValueNotifier<bool> stormWarningNotifier = ValueNotifier(false);
+
+  // ── Milestone banner notifier ─────────────────────────────────────────────
+  // Carries the banner label; null when hidden.
+  final ValueNotifier<String?> milestoneBannerNotifier = ValueNotifier(null);
+  final _milestones = [500, 1000, 2000, 5000, 10000, 20000];
+  final _crossedMilestones = <int>{};
+  double _milestoneBannerTimer = 0;
+
+  // ── Chain lightning notifier ──────────────────────────────────────────────
+  final ValueNotifier<int> chainBonusNotifier = ValueNotifier(0);
+  double _lastCatchTime = -10.0;
+  int _rapidChainCount = 0;
+  static const double _chainWindow = 0.55;
   double _stormCooldown = 28.0; // seconds until next storm
   double _stormTimer = 0;
   double _stormWarningTimer = 0;
@@ -239,7 +252,27 @@ class ZeusBoltDashGame extends FlameGame with HasCollisionDetection {
     scoreNotifier.value += pts * stormBonus;
     _addPower(kPowerFillPerBolt);
     VibrationService.instance.collectLight();
+
+    // ── Chain lightning check ─────────────────────────────────────────────
+    final gap = totalElapsedTime - _lastCatchTime;
+    if (gap <= _chainWindow) {
+      _rapidChainCount++;
+      if (_rapidChainCount >= 3) {
+        final chainBonus = 30 + _rapidChainCount * 10;
+        scoreNotifier.value += chainBonus;
+        chainBonusNotifier.value = chainBonus;
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (!isGameOver) chainBonusNotifier.value = 0;
+        });
+        _rapidChainCount = 0;
+      }
+    } else {
+      _rapidChainCount = 1;
+    }
+    _lastCatchTime = totalElapsedTime;
+
     _checkScoreAchievements();
+    _checkMilestones();
   }
 
   void onLightningMissed() {
@@ -326,6 +359,13 @@ class ZeusBoltDashGame extends FlameGame with HasCollisionDetection {
 
     totalElapsedTime += dt;
 
+    if (_milestoneBannerTimer > 0) {
+      _milestoneBannerTimer -= dt;
+      if (_milestoneBannerTimer <= 0) {
+        milestoneBannerNotifier.value = null;
+      }
+    }
+
     if (coinModeActive) {
       coinModeTimer -= dt;
       coinModeTimerNotifier.value = coinModeTimer;
@@ -352,6 +392,10 @@ class ZeusBoltDashGame extends FlameGame with HasCollisionDetection {
     _stormSurvivedThisRound = false;
     _powerFill = 0;
     _sessionBestCombo = 0;
+    _crossedMilestones.clear();
+    _milestoneBannerTimer = 0;
+    _lastCatchTime = -10.0;
+    _rapidChainCount = 0;
 
     scoreNotifier.value = 0;
     rocksHitNotifier.value = 0;
@@ -386,6 +430,27 @@ class ZeusBoltDashGame extends FlameGame with HasCollisionDetection {
     if (s >= 3) changed |= data.unlockAchievement('combo_x3');
     if (s >= 5) changed |= data.unlockAchievement('combo_x5');
     if (changed) await StorageService.instance.savePlayerData(data);
+  }
+
+  void _checkMilestones() {
+    for (final m in _milestones) {
+      if (!_crossedMilestones.contains(m) && scoreNotifier.value >= m) {
+        _crossedMilestones.add(m);
+        final label = _milestoneLabel(m);
+        milestoneBannerNotifier.value = label;
+        _milestoneBannerTimer = 2.5;
+        VibrationService.instance.rockDamage();
+      }
+    }
+  }
+
+  String _milestoneLabel(int score) {
+    if (score >= 20000) return '🏆 LEGEND OF OLYMPUS!';
+    if (score >= 10000) return '⚡ ZEUS\'S CHAMPION!';
+    if (score >= 5000)  return '🔱 DIVINE HERO!';
+    if (score >= 2000)  return '🌩️ STORM MASTER!';
+    if (score >= 1000)  return '✨ OLYMPIAN WARRIOR!';
+    return '⚡ FIRST THUNDER!';
   }
 
   void _checkScoreAchievements() async {
@@ -454,6 +519,8 @@ class ZeusBoltDashGame extends FlameGame with HasCollisionDetection {
     powerReadyNotifier.dispose();
     stormActiveNotifier.dispose();
     stormWarningNotifier.dispose();
+    milestoneBannerNotifier.dispose();
+    chainBonusNotifier.dispose();
     super.onRemove();
   }
 }

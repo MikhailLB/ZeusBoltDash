@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../painters/menu_background_painter.dart';
 import '../painters/lightning_rain_painter.dart';
@@ -17,10 +18,10 @@ class MenuScreen extends StatefulWidget {
   State<MenuScreen> createState() => _MenuScreenState();
 }
 
-class _MenuScreenState extends State<MenuScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _bgCtrl;   // background + rain loop
+class _MenuScreenState extends State<MenuScreen> with TickerProviderStateMixin {
+  late final AnimationController _bgCtrl;
   late final AnimationController _entranceCtrl;
+  late final AnimationController _zeusCtrl;
   late final Animation<Offset> _slideIn;
   late final Animation<double> _fadeIn;
 
@@ -31,17 +32,23 @@ class _MenuScreenState extends State<MenuScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
     _bgCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 6),
     )..repeat();
 
+    _zeusCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+
     _entranceCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 700),
     );
-    _slideIn = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
+    _slideIn = Tween<Offset>(begin: const Offset(0, 0.10), end: Offset.zero)
         .animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOutCubic));
     _fadeIn = Tween<double>(begin: 0, end: 1)
         .animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut));
@@ -65,38 +72,43 @@ class _MenuScreenState extends State<MenuScreen>
   @override
   void dispose() {
     _bgCtrl.dispose();
+    _zeusCtrl.dispose();
     _entranceCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Painted background (columns + marble floor) ───────────────
+          // ── Animated background ─────────────────────────────────────
           AnimatedBuilder(
             animation: _bgCtrl,
             builder: (_, __) => CustomPaint(
               painter: MenuBackgroundPainter(animValue: _bgCtrl.value),
             ),
           ),
-          // ── Falling lightning rain ────────────────────────────────────
           AnimatedBuilder(
             animation: _bgCtrl,
             builder: (_, __) => CustomPaint(
               painter: LightningRainPainter(animValue: _bgCtrl.value),
             ),
           ),
-          // ── Content ───────────────────────────────────────────────────
+          // ── Zeus silhouette (atmospheric) ───────────────────────────
+          _ZeusSilhouette(animCtrl: _zeusCtrl),
+          // ── Main content ────────────────────────────────────────────
           SafeArea(
             child: FadeTransition(
               opacity: _fadeIn,
               child: SlideTransition(
                 position: _slideIn,
-                child: _buildContent(context, size),
+                child: LayoutBuilder(
+                  builder: (ctx, constraints) =>
+                      _buildContent(ctx, constraints),
+                ),
               ),
             ),
           ),
@@ -105,28 +117,34 @@ class _MenuScreenState extends State<MenuScreen>
     );
   }
 
-  Widget _buildContent(BuildContext context, Size size) {
+  Widget _buildContent(BuildContext context, BoxConstraints constraints) {
+    final h = constraints.maxHeight;
+    final w = constraints.maxWidth;
+    final compact = h < 680;
+
     return Column(
       children: [
-        const SizedBox(height: 8),
-        // ── Top row: coins + settings ────────────────────────────────
+        SizedBox(height: compact ? 6 : 10),
+        // ── Top bar ─────────────────────────────────────────────────
         _buildTopBar(context),
-        const SizedBox(height: 6),
-        // ── Daily bonus (only if awarded today) ──────────────────────
-        if (_dailyBonus > 0) _buildDailyBonusBanner(),
-        const Spacer(),
-        // ── Title ────────────────────────────────────────────────────
-        _buildTitle(size),
-        const SizedBox(height: 10),
-        // ── High score ───────────────────────────────────────────────
-        _buildHighScoreChip(),
-        const Spacer(),
-        // ── Buttons ──────────────────────────────────────────────────
-        _buildButtons(context, size),
-        const Spacer(flex: 2),
-        // ── Footer ───────────────────────────────────────────────────
+        // ── Daily bonus ─────────────────────────────────────────────
+        if (_dailyBonus > 0) ...[
+          SizedBox(height: compact ? 6 : 8),
+          _buildDailyBonusBanner(compact: compact),
+        ],
+        // ── Title zone ──────────────────────────────────────────────
+        Expanded(
+          flex: 5,
+          child: Center(
+            child: _buildTitle(w, compact: compact),
+          ),
+        ),
+        // ── Buttons ─────────────────────────────────────────────────
+        _buildButtons(context, w, compact: compact),
+        SizedBox(height: compact ? 10 : 14),
+        // ── Footer ──────────────────────────────────────────────────
         _buildFooter(context),
-        const SizedBox(height: 14),
+        SizedBox(height: compact ? 8 : 12),
       ],
     );
   }
@@ -135,21 +153,20 @@ class _MenuScreenState extends State<MenuScreen>
 
   Widget _buildTopBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          // Coins chip
           _glassChip(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('🪙', style: TextStyle(fontSize: 15)),
+                const Text('🪙', style: TextStyle(fontSize: 14)),
                 const SizedBox(width: 5),
                 Text(
                   '$_coins',
                   style: GoogleFonts.cinzel(
                     color: const Color(0xFFFFD700),
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -157,7 +174,6 @@ class _MenuScreenState extends State<MenuScreen>
             ),
           ),
           const Spacer(),
-          // How to play
           _iconButton(
             icon: Icons.help_outline_rounded,
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
@@ -165,7 +181,6 @@ class _MenuScreenState extends State<MenuScreen>
             )),
           ),
           const SizedBox(width: 10),
-          // Settings
           _iconButton(
             icon: Icons.settings_rounded,
             onTap: () => showDialog(
@@ -181,12 +196,12 @@ class _MenuScreenState extends State<MenuScreen>
 
   Widget _glassChip({required Widget child}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
+        color: Colors.black.withValues(alpha: 0.50),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-            color: const Color(0xFFD4A017).withValues(alpha: 0.6)),
+            color: const Color(0xFFD4A017).withValues(alpha: 0.65)),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFD4A017).withValues(alpha: 0.15),
@@ -202,78 +217,67 @@ class _MenuScreenState extends State<MenuScreen>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.black.withValues(alpha: 0.50),
+          borderRadius: BorderRadius.circular(11),
           border: Border.all(
-              color: const Color(0xFFD4A017).withValues(alpha: 0.5)),
+              color: const Color(0xFFD4A017).withValues(alpha: 0.55)),
         ),
-        child: Icon(icon, color: const Color(0xFFFFD700), size: 22),
+        child: Icon(icon, color: const Color(0xFFFFD700), size: 20),
       ),
     );
   }
 
-  // ── Daily bonus banner ──────────────────────────────────────────────────
+  // ── Daily bonus ──────────────────────────────────────────────────────────
 
-  Widget _buildDailyBonusBanner() {
+  Widget _buildDailyBonusBanner({bool compact = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: compact ? 2 : 4),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        padding: EdgeInsets.symmetric(
+            horizontal: 14, vertical: compact ? 7 : 9),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF3A2A00), Color(0xFF6B4A00), Color(0xFF3A2A00)],
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(13),
           border: Border.all(color: const Color(0xFFFFD700)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFD700).withValues(alpha: 0.25),
-              blurRadius: 14,
+              color: const Color(0xFFFFD700).withValues(alpha: 0.22),
+              blurRadius: 12,
             ),
           ],
         ),
         child: Row(
           children: [
-            const Text('🎁', style: TextStyle(fontSize: 22)),
+            const Text('🎁', style: TextStyle(fontSize: 20)),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'DAILY BONUS',
-                    style: GoogleFonts.cinzel(
-                      color: const Color(0xFFFFD700),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  Text(
-                    'The gods favour you today!',
-                    style: GoogleFonts.cinzel(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
+              child: Text(
+                'DAILY BONUS — The gods favour you today!',
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFFFE480),
+                  fontSize: compact ? 10 : 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFD4A017).withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: const Color(0xFFD4A017)),
               ),
               child: Text(
                 '+$_dailyBonus 🪙',
                 style: GoogleFonts.cinzel(
                   color: const Color(0xFFFFD700),
-                  fontSize: 14,
+                  fontSize: compact ? 12 : 13,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -284,123 +288,138 @@ class _MenuScreenState extends State<MenuScreen>
     );
   }
 
-  // ── Title ───────────────────────────────────────────────────────────────
+  // ── Title ────────────────────────────────────────────────────────────────
 
-  Widget _buildTitle(Size size) {
+  Widget _buildTitle(double w, {bool compact = false}) {
+    final orbSize = compact ? 62.0 : 72.0;
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Animated bolt orb
+        // Pulsing bolt orb
         AnimatedBuilder(
           animation: _bgCtrl,
           builder: (_, __) {
-            final scale = 1.0 + sin(_bgCtrl.value * 2 * pi) * 0.055;
-            final glowStrength =
-                0.6 + sin(_bgCtrl.value * 2 * pi) * 0.4;
+            final t = _bgCtrl.value * 2 * pi;
+            final scale = 1.0 + sin(t) * 0.055;
+            final glow = 0.55 + sin(t) * 0.45;
             return Transform.scale(
               scale: scale,
               child: Container(
-                width: 78,
-                height: 78,
+                width: orbSize,
+                height: orbSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const RadialGradient(
                     colors: [
                       Color(0xFFFFEE66),
                       Color(0xFFD4A017),
-                      Color(0xFF7A5800),
+                      Color(0xFF5A3800),
                     ],
-                    stops: [0, 0.5, 1],
+                    stops: [0, 0.52, 1],
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFFFFD700)
-                          .withValues(alpha: glowStrength * 0.55),
-                      blurRadius: 28,
-                      spreadRadius: 5,
+                          .withValues(alpha: glow * 0.6),
+                      blurRadius: 30,
+                      spreadRadius: 6,
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFFFFAA00)
+                          .withValues(alpha: glow * 0.3),
+                      blurRadius: 60,
+                      spreadRadius: 12,
                     ),
                   ],
                 ),
-                child: const Icon(Icons.bolt, color: Colors.white, size: 44),
+                child: Icon(Icons.bolt,
+                    color: Colors.white, size: orbSize * 0.58),
               ),
             );
           },
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: compact ? 10 : 14),
+        // Game name image
         Image.asset(
           'assets/Game_Name.webp',
-          width: size.width * 0.82,
+          width: w * 0.80,
           fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => Text(
             'ZEUS BOLT DASH',
             style: GoogleFonts.cinzel(
               color: const Color(0xFFFFD700),
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
               letterSpacing: 3,
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  // ── High score chip ──────────────────────────────────────────────────────
-
-  Widget _buildHighScoreChip() {
-    if (_highScore == 0) return const SizedBox.shrink();
-    return _glassChip(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('🏆', style: TextStyle(fontSize: 15)),
-          const SizedBox(width: 6),
-          Text(
-            'BEST  $_highScore',
-            style: GoogleFonts.cinzel(
-              color: const Color(0xFFFFE066),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
+        // Best score below title
+        if (_highScore > 0) ...[
+          SizedBox(height: compact ? 8 : 12),
+          _glassChip(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🏆', style: TextStyle(fontSize: 14)),
+                const SizedBox(width: 6),
+                Text(
+                  'BEST  $_highScore',
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFFFE066),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 
   // ── Buttons ──────────────────────────────────────────────────────────────
 
-  Widget _buildButtons(BuildContext context, Size size) {
-    final btnW = (size.width * 0.74).clamp(210.0, 310.0);
+  Widget _buildButtons(BuildContext context, double w,
+      {bool compact = false}) {
+    final btnW = (w * 0.76).clamp(210.0, 320.0);
+    final btnH = compact ? 54.0 : 58.0;
+    final gap = compact ? 10.0 : 12.0;
+
     return Column(
       children: [
         _OlympusButton(
           label: 'PLAY',
           emoji: '⚡',
-          topColor: const Color(0xFF1E7A38),
-          bottomColor: const Color(0xFF0D3D1C),
-          glowColor: const Color(0xFF28A745),
+          topColor: const Color(0xFF1A7232),
+          bottomColor: const Color(0xFF0A3318),
+          glowColor: const Color(0xFF28C653),
           width: btnW,
+          height: btnH,
           onTap: () => Navigator.of(context).pushNamed('/game'),
         ),
-        const SizedBox(height: 13),
+        SizedBox(height: gap),
         _OlympusButton(
           label: 'TREASURY',
           emoji: '🏛️',
-          topColor: const Color(0xFF8B6000),
-          bottomColor: const Color(0xFF4A3200),
+          topColor: const Color(0xFF8B5E00),
+          bottomColor: const Color(0xFF422C00),
           glowColor: const Color(0xFFD4A017),
           width: btnW,
+          height: btnH,
           onTap: () => Navigator.of(context).pushNamed('/shop'),
         ),
-        const SizedBox(height: 13),
+        SizedBox(height: gap),
         _OlympusButton(
           label: 'FEATS',
           emoji: '👑',
-          topColor: const Color(0xFF5A2A00),
-          bottomColor: const Color(0xFF2D1500),
+          topColor: const Color(0xFF5A2000),
+          bottomColor: const Color(0xFF2A1000),
           glowColor: const Color(0xFFFF8C00),
           width: btnW,
+          height: btnH,
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
             builder: (_) => const AchievementsScreen(),
           )),
@@ -409,67 +428,24 @@ class _MenuScreenState extends State<MenuScreen>
     );
   }
 
-  // ── Footer ────────────────────────────────────────────────────────────────
+  // ── Footer ───────────────────────────────────────────────────────────────
 
   Widget _buildFooter(BuildContext context) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        _legalLink(context, 'Privacy Policy',
+            'https://zeusboltdash.com/privacy-policy.html', 'Privacy Policy'),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Row(
-            children: [
-              Expanded(child: _dividerLine(left: true)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: AnimatedBuilder(
-                  animation: _bgCtrl,
-                  builder: (_, __) {
-                    final glow = sin(_bgCtrl.value * 2 * pi) * 0.5 + 0.5;
-                    return Icon(
-                      Icons.bolt,
-                      color: const Color(0xFFFFD700)
-                          .withValues(alpha: 0.5 + glow * 0.5),
-                      size: 18,
-                    );
-                  },
-                ),
-              ),
-              Expanded(child: _dividerLine(left: false)),
-            ],
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text('•',
+              style: TextStyle(
+                  color: const Color(0xFF6A9FD8).withValues(alpha: 0.5),
+                  fontSize: 13)),
         ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _legalLink(context, 'Privacy Policy',
-                'https://zeusboltdash.com/privacy-policy.html',
-                'Privacy Policy'),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text('•',
-                  style: TextStyle(
-                      color: const Color(0xFF6A9FD8).withValues(alpha: 0.6),
-                      fontSize: 13)),
-            ),
-            _legalLink(context, 'Support',
-                'https://zeusboltdash.com/support.html', 'Support'),
-          ],
-        ),
+        _legalLink(context, 'Support',
+            'https://zeusboltdash.com/support.html', 'Support'),
       ],
-    );
-  }
-
-  Widget _dividerLine({required bool left}) {
-    return Container(
-      height: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: left
-              ? [Colors.transparent, const Color(0xFFD4A017)]
-              : [const Color(0xFFD4A017), Colors.transparent],
-        ),
-      ),
     );
   }
 
@@ -493,8 +469,37 @@ class _MenuScreenState extends State<MenuScreen>
   }
 }
 
+// ── Zeus atmospheric silhouette ───────────────────────────────────────────────
+
+class _ZeusSilhouette extends StatelessWidget {
+  const _ZeusSilhouette({required this.animCtrl});
+  final AnimationController animCtrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animCtrl,
+      builder: (_, __) {
+        final t = animCtrl.value;
+        return Positioned(
+          right: -30,
+          bottom: 60,
+          child: Opacity(
+            opacity: 0.07 + t * 0.05,
+            child: Image.asset(
+              'assets/game_assets/zeus_01_asset.webp',
+              height: MediaQuery.of(context).size.height * 0.52,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 // ── Olympus button ────────────────────────────────────────────────────────────
-// Unique shape: left side has coloured emoji panel; right side has label
 
 class _OlympusButton extends StatefulWidget {
   final String label;
@@ -503,6 +508,7 @@ class _OlympusButton extends StatefulWidget {
   final Color bottomColor;
   final Color glowColor;
   final double width;
+  final double height;
   final VoidCallback onTap;
 
   const _OlympusButton({
@@ -512,6 +518,7 @@ class _OlympusButton extends StatefulWidget {
     required this.bottomColor,
     required this.glowColor,
     required this.width,
+    required this.height,
     required this.onTap,
   });
 
@@ -528,10 +535,8 @@ class _OlympusButtonState extends State<_OlympusButton>
   void initState() {
     super.initState();
     _press = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 80),
-    );
-    _scale = Tween<double>(begin: 1.0, end: 0.93)
+        vsync: this, duration: const Duration(milliseconds: 80));
+    _scale = Tween<double>(begin: 1.0, end: 0.94)
         .animate(CurvedAnimation(parent: _press, curve: Curves.easeInOut));
   }
 
@@ -554,21 +559,21 @@ class _OlympusButtonState extends State<_OlympusButton>
         scale: _scale,
         child: Container(
           width: widget.width,
-          height: 60,
+          height: widget.height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: const Color(0xFFD4A017).withValues(alpha: 0.85),
-              width: 1.6,
+              color: const Color(0xFFD4A017).withValues(alpha: 0.80),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor.withValues(alpha: 0.30),
+                color: widget.glowColor.withValues(alpha: 0.28),
                 blurRadius: 16,
                 spreadRadius: 1,
               ),
               const BoxShadow(
-                color: Colors.black26,
+                color: Colors.black38,
                 blurRadius: 6,
                 offset: Offset(0, 4),
               ),
@@ -578,9 +583,9 @@ class _OlympusButtonState extends State<_OlympusButton>
             borderRadius: BorderRadius.circular(13),
             child: Row(
               children: [
-                // ── Left emoji panel ────────────────────────────────────
+                // Left emoji panel
                 Container(
-                  width: 58,
+                  width: 54,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
@@ -590,15 +595,13 @@ class _OlympusButtonState extends State<_OlympusButton>
                   ),
                   child: Center(
                     child: Text(widget.emoji,
-                        style: const TextStyle(fontSize: 26)),
+                        style: const TextStyle(fontSize: 24)),
                   ),
                 ),
-                // ── Divider line ────────────────────────────────────────
                 Container(
-                  width: 1,
-                  color: const Color(0xFFD4A017).withValues(alpha: 0.4),
-                ),
-                // ── Right label area ────────────────────────────────────
+                    width: 1,
+                    color: const Color(0xFFD4A017).withValues(alpha: 0.4)),
+                // Label
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -606,7 +609,7 @@ class _OlympusButtonState extends State<_OlympusButton>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color.lerp(widget.topColor, Colors.black, 0.45)!,
+                          Color.lerp(widget.topColor, Colors.black, 0.50)!,
                           Color.lerp(widget.bottomColor, Colors.black, 0.55)!,
                         ],
                       ),
@@ -616,7 +619,7 @@ class _OlympusButtonState extends State<_OlympusButton>
                         widget.label,
                         style: GoogleFonts.cinzel(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 3,
                         ),
@@ -624,23 +627,23 @@ class _OlympusButtonState extends State<_OlympusButton>
                     ),
                   ),
                 ),
-                // ── Right arrow indicator ───────────────────────────────
+                // Arrow panel
                 Container(
-                  width: 36,
+                  width: 34,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        widget.topColor.withValues(alpha: 0.7),
-                        widget.bottomColor.withValues(alpha: 0.7),
+                        widget.topColor.withValues(alpha: 0.75),
+                        widget.bottomColor.withValues(alpha: 0.75),
                       ],
                     ),
                   ),
                   child: Icon(
                     Icons.chevron_right_rounded,
-                    color: Colors.white.withValues(alpha: 0.8),
-                    size: 26,
+                    color: Colors.white.withValues(alpha: 0.75),
+                    size: 24,
                   ),
                 ),
               ],

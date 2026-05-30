@@ -116,7 +116,7 @@ class _SurgePulseOverlayState extends State<_SurgePulseOverlay>
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFFFFD700)
-                                .withOpacity(0.6 * _glow.value),
+                                .withValues(alpha: 0.6 * _glow.value),
                             blurRadius: 24,
                             spreadRadius: 4,
                           ),

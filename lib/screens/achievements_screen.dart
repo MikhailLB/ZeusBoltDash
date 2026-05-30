@@ -105,7 +105,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.55),
+                color: Colors.black.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFD4A017)),
               ),
@@ -153,9 +153,9 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD4A017).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFFD4A017).withValues(alpha: 0.5)),
       ),
       child: Wrap(
         spacing: 18,
@@ -240,21 +240,21 @@ class _AchievementCard extends StatelessWidget {
               )
             : LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.6),
-                  Colors.black.withOpacity(0.4),
+                  Colors.black.withValues(alpha: 0.6),
+                  Colors.black.withValues(alpha: 0.4),
                 ],
               ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: unlocked
-              ? const Color(0xFFD4A017).withOpacity(0.8)
-              : Colors.white.withOpacity(0.12),
+              ? const Color(0xFFD4A017).withValues(alpha: 0.8)
+              : Colors.white.withValues(alpha: 0.12),
           width: unlocked ? 1.5 : 1,
         ),
         boxShadow: unlocked
             ? [
                 BoxShadow(
-                  color: const Color(0xFFD4A017).withOpacity(0.2),
+                  color: const Color(0xFFD4A017).withValues(alpha: 0.2),
                   blurRadius: 12,
                 ),
               ]
@@ -269,12 +269,12 @@ class _AchievementCard extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: unlocked
-                  ? const Color(0xFFD4A017).withOpacity(0.2)
-                  : Colors.white.withOpacity(0.06),
+                  ? const Color(0xFFD4A017).withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.06),
               border: Border.all(
                 color: unlocked
-                    ? const Color(0xFFD4A017).withOpacity(0.5)
-                    : Colors.white.withOpacity(0.15),
+                    ? const Color(0xFFD4A017).withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.15),
               ),
             ),
             child: Center(
@@ -282,7 +282,7 @@ class _AchievementCard extends StatelessWidget {
                   ? Text(achievement.emoji,
                       style: const TextStyle(fontSize: 20))
                   : Icon(Icons.lock_outline,
-                      color: Colors.white.withOpacity(0.3), size: 18),
+                      color: Colors.white.withValues(alpha: 0.3), size: 18),
             ),
           ),
           const SizedBox(width: 10),
@@ -297,7 +297,7 @@ class _AchievementCard extends StatelessWidget {
                   style: GoogleFonts.cinzel(
                     color: unlocked
                         ? const Color(0xFFFFD700)
-                        : Colors.white.withOpacity(0.4),
+                        : Colors.white.withValues(alpha: 0.4),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -309,8 +309,8 @@ class _AchievementCard extends StatelessWidget {
                   achievement.description,
                   style: GoogleFonts.cinzel(
                     color: unlocked
-                        ? Colors.white.withOpacity(0.7)
-                        : Colors.white.withOpacity(0.25),
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.white.withValues(alpha: 0.25),
                     fontSize: 9,
                   ),
                   maxLines: 2,
@@ -347,7 +347,7 @@ class _ProgressCircle extends StatelessWidget {
           CircularProgressIndicator(
             value: value,
             strokeWidth: 4,
-            backgroundColor: Colors.white.withOpacity(0.15),
+            backgroundColor: Colors.white.withValues(alpha: 0.15),
             valueColor:
                 const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
           ),

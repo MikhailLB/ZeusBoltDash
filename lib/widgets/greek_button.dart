@@ -70,7 +70,7 @@ class _GreekButtonState extends State<GreekButton>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                baseColor.withOpacity(0.95),
+                baseColor.withValues(alpha: 0.95),
                 Color.lerp(baseColor, Colors.black, 0.4)!,
               ],
             ),
@@ -81,12 +81,12 @@ class _GreekButtonState extends State<GreekButton>
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFD4A017).withOpacity(0.4),
+                color: const Color(0xFFD4A017).withValues(alpha: 0.4),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -133,7 +133,7 @@ class _GreekButtonState extends State<GreekButton>
                         letterSpacing: 2,
                         shadows: [
                           Shadow(
-                            color: const Color(0xFFD4A017).withOpacity(0.8),
+                            color: const Color(0xFFD4A017).withValues(alpha: 0.8),
                             blurRadius: 8,
                           ),
                         ],

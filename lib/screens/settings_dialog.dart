@@ -37,7 +37,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
           border: Border.all(color: const Color(0xFFD4A017), width: 2),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFD4A017).withOpacity(0.3),
+              color: const Color(0xFFD4A017).withValues(alpha: 0.3),
               blurRadius: 20,
             ),
           ],
@@ -57,7 +57,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             const SizedBox(height: 4),
             Container(
               height: 1,
-              color: const Color(0xFFD4A017).withOpacity(0.5),
+              color: const Color(0xFFD4A017).withValues(alpha: 0.5),
             ),
             const SizedBox(height: 20),
 

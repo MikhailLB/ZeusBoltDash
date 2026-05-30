@@ -171,6 +171,34 @@ class _LoadingScreenState extends State<LoadingScreen>
     }
   }
 
+  Widget _buildBarPositioned(bool isPortrait, BuildContext context) {
+    final bar = AnimatedBuilder(
+      animation: _progressCtrl,
+      builder: (_, __) {
+        final state =
+            (_progressCtrl.value * 4).clamp(0.0, 4.0).floor().clamp(1, 4);
+        return _LoadingBar(asset: _barAsset(state), isPortrait: isPortrait);
+      },
+    );
+
+    if (isPortrait) {
+      // Portrait: bar lives at the very bottom of the screen
+      return Positioned(
+        left: 0, right: 0, bottom: 0,
+        child: Center(child: bar),
+      );
+    }
+
+    // Landscape: the video places "LOADING" text near the vertical centre.
+    // Align our bar slightly BELOW centre so it appears under that text.
+    return Positioned.fill(
+      child: Align(
+        alignment: const Alignment(0.0, 0.72),
+        child: bar,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,27 +231,7 @@ class _LoadingScreenState extends State<LoadingScreen>
 
               // ── Loading bar ────────────────────────────────────────
               if (_showBar)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: AnimatedBuilder(
-                      animation: _progressCtrl,
-                      builder: (_, __) {
-                        final state =
-                            (_progressCtrl.value * 4)
-                                .clamp(0.0, 4.0)
-                                .floor()
-                                .clamp(1, 4);
-                        return _LoadingBar(
-                          asset: _barAsset(state),
-                          isPortrait: isPortrait,
-                        );
-                      },
-                    ),
-                  ),
-                ),
+                _buildBarPositioned(isPortrait, context),
             ],
           );
         },

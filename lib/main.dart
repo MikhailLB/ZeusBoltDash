@@ -40,9 +40,9 @@ Future<void> main() async {
   final sw = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Start locked to portrait; LoadingScreen will temporarily unlock landscape
   await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp, DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight,
+    DeviceOrientation.portraitUp,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

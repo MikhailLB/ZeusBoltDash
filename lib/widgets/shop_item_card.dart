@@ -46,7 +46,7 @@ class ShopItemCard extends StatelessWidget {
         boxShadow: [
           if (equipped)
             BoxShadow(
-              color: const Color(0xFFD4A017).withOpacity(0.4),
+              color: const Color(0xFFD4A017).withValues(alpha: 0.4),
               blurRadius: 12,
             ),
         ],
@@ -98,7 +98,7 @@ class ShopItemCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color, width: 1),
       ),
