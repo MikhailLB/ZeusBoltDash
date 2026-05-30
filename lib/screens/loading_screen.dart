@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import '../services/storage_service.dart';
 import '../services/vibration_service.dart';
+import '../services/orientation_service.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -32,12 +33,7 @@ class _LoadingScreenState extends State<LoadingScreen>
     super.initState();
     // Loading screen works in ALL orientations — video adapts automatically.
     // All other screens re-lock to portrait in their own initState.
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    OrientationService.unlockAll();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _progressCtrl = AnimationController(vsync: this, duration: _barDuration);
     _initialise();
@@ -70,7 +66,7 @@ class _LoadingScreenState extends State<LoadingScreen>
     }
 
     await Future.delayed(const Duration(milliseconds: 300));
-    _goToMenu();
+    await _goToMenu();
   }
 
   Future<void> _initVideos() async {
@@ -126,11 +122,14 @@ class _LoadingScreenState extends State<LoadingScreen>
     }
   }
 
-  void _goToMenu() {
+  Future<void> _goToMenu() async {
     if (_navigated || !mounted) return;
     _navigated = true;
-    // Lock portrait before leaving loading screen — all game screens are portrait.
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    // Lock portrait via native channel (works on iPad iOS 16+).
+    await OrientationService.lockPortrait();
+    // Give iOS time to actually rotate before building portrait UI.
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/menu');
   }
 

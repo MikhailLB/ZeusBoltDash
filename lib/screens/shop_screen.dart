@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/orientation_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/storage_service.dart';
 import '../widgets/shop_item_card.dart';
@@ -48,7 +49,7 @@ class _ShopScreenState extends State<ShopScreen>
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    OrientationService.lockPortrait();
     _tabCtrl = TabController(length: 3, vsync: this);
     _loadData();
   }

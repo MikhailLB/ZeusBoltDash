@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/orientation_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../painters/menu_background_painter.dart';
 import '../painters/lightning_rain_painter.dart';
@@ -32,7 +33,7 @@ class _MenuScreenState extends State<MenuScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    OrientationService.lockPortrait();
 
     _bgCtrl = AnimationController(
       vsync: this,
