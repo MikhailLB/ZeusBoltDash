@@ -304,6 +304,7 @@ class _ZeusGateState extends State<ZeusGate> {
   void _navigateToGame() {
     if (_routed) return;
     _routed = true;
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MenuScreen()),
     );

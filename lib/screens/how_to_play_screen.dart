@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HowToPlayScreen extends StatefulWidget {
@@ -62,6 +63,7 @@ class _HowToPlayScreenState extends State<HowToPlayScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     _entrance = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 450),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/achievement.dart';
 import '../services/storage_service.dart';
@@ -20,6 +21,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     final data = StorageService.instance.loadPlayerData();
     _unlocked = List<String>.from(data.unlockedAchievements);
     _stats = _Stats(
