@@ -24,7 +24,8 @@ class WaveDirector {
     _interWaveDelay = 1.2;
   }
 
-  int get _waveQuota => isTitanWave ? 2 + wave ~/ 5 : 5 + wave;
+  int get _waveQuota =>
+      isTitanWave ? 2 + wave ~/ 4 : 6 + (wave * 1.4).floor();
 
   /// Advances spawning. Calls [spawn] for each newly created threat.
   /// [arenaRadius] is the spawn ring just outside the visible arena edge.
@@ -57,12 +58,20 @@ class WaveDirector {
       _sinceSpawn = 0;
       spawn(_makeThreat(arenaRadius));
       _spawned += 1;
+
+      // From mid-game on, threats start arriving in bursts of two so the
+      // player must read multiple directions at once.
+      if (!isTitanWave && wave >= 6 && _spawned < _quota &&
+          _rng.nextDouble() < 0.18 + wave * 0.012) {
+        spawn(_makeThreat(arenaRadius));
+        _spawned += 1;
+      }
     }
   }
 
   double get _spawnInterval {
-    final base = isTitanWave ? 1.9 : 1.55;
-    return math.max(0.42, base - wave * 0.055);
+    final base = isTitanWave ? 1.8 : 1.5;
+    return math.max(0.32, base - wave * 0.072);
   }
 
   Threat _makeThreat(double arenaRadius) {
@@ -76,7 +85,7 @@ class WaveDirector {
           kind: kind,
           bearing: bearing,
           radius: arenaRadius,
-          speed: (118 + wave * 7) * 1.0,
+          speed: (120 + wave * 9).toDouble(),
           drawRadius: 32,
           variant: _rng.nextInt(5),
           spin: (_rng.nextDouble() - 0.5) * 2.4,
@@ -86,7 +95,7 @@ class WaveDirector {
           kind: kind,
           bearing: bearing,
           radius: arenaRadius,
-          speed: (185 + wave * 9) * 1.0,
+          speed: (190 + wave * 13).toDouble(),
           drawRadius: 22,
           variant: _rng.nextInt(4),
         );
@@ -95,9 +104,9 @@ class WaveDirector {
           kind: kind,
           bearing: bearing,
           radius: arenaRadius,
-          speed: (98 + wave * 6) * 1.0,
-          weaveAmp: 1.0 + _rng.nextDouble(),
-          weavePhaseSpeed: 2.4 + _rng.nextDouble() * 1.5,
+          speed: (100 + wave * 8).toDouble(),
+          weaveAmp: 1.2 + _rng.nextDouble() * 1.4,
+          weavePhaseSpeed: 2.6 + _rng.nextDouble() * 1.8,
           drawRadius: 24,
         );
       case ThreatKind.titan:
@@ -105,8 +114,8 @@ class WaveDirector {
           kind: kind,
           bearing: bearing,
           radius: arenaRadius,
-          speed: 52 + wave * 1.6,
-          hp: 3 + wave ~/ 5,
+          speed: 56 + wave * 2.2,
+          hp: 3 + wave ~/ 4,
           drawRadius: 58,
         );
       case ThreatKind.blessing:
@@ -147,8 +156,11 @@ class WaveDirector {
     if (r < moteCut) return ThreatKind.essenceMote;
 
     final hostile = (r - moteCut) / (1 - moteCut);
-    if (hostile < 0.5) return ThreatKind.boulder;
-    if (hostile < 0.8) return ThreatKind.darkBolt;
+    // Slower boulders give way to fast bolts and weaving shades as waves climb.
+    final boulderShare = math.max(0.28, 0.5 - wave * 0.018);
+    final boltShare = boulderShare + math.min(0.42, 0.3 + wave * 0.01);
+    if (hostile < boulderShare) return ThreatKind.boulder;
+    if (hostile < boltShare) return ThreatKind.darkBolt;
     return ThreatKind.shade;
   }
 }

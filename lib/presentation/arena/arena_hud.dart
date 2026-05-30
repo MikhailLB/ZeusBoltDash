@@ -35,14 +35,21 @@ class ArenaHud extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                ValueListenableBuilder<int>(
-                  valueListenable: world.wave,
-                  builder: (_, w, __) => AegisChip(
-                    icon: Icons.shield_moon_outlined,
-                    iconColor: acc,
-                    label: 'WAVE $w',
+                if (world.tutorial)
+                  const AegisChip(
+                    icon: Icons.school_rounded,
+                    iconColor: AegisPalette.goldBright,
+                    label: 'TUTORIAL',
+                  )
+                else
+                  ValueListenableBuilder<int>(
+                    valueListenable: world.wave,
+                    builder: (_, w, __) => AegisChip(
+                      icon: Icons.shield_moon_outlined,
+                      iconColor: acc,
+                      label: 'WAVE $w',
+                    ),
                   ),
-                ),
                 const SizedBox(width: 10),
                 _SquareButton(icon: Icons.pause, onTap: onPause, accent: acc),
               ],
@@ -83,9 +90,29 @@ class ArenaHud extends StatelessWidget {
             ),
           ),
 
+          // ── "Learning" ribbon during the tutorial ────────────────────────
+          if (world.tutorial)
+            Positioned(
+              top: 100,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AegisPalette.goldDeep.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AegisPalette.goldBright, width: 1.2),
+                  ),
+                  child: Text('● LEARNING MODE ●',
+                      style: Glyph.label(size: 11, color: Colors.white, tracking: 2)),
+                ),
+              ),
+            ),
+
           // ── Centre banner ────────────────────────────────────────────────
           Positioned(
-            top: 110,
+            top: 140,
             left: 0,
             right: 0,
             child: Center(

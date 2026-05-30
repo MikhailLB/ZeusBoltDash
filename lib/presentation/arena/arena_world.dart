@@ -448,18 +448,10 @@ class ArenaWorld {
           _tutTimer = 0;
         }
         break;
-      case 3:
-        tutorialHint.value = '⚡  Every push fills your POWER. Fill it for a blast!';
-        _tutTimer += dt;
-        if (_tutTimer > 3.2) {
-          _tutPhase = 4;
-          _tutTimer = 0;
-        }
-        break;
       default:
-        tutorialHint.value = '🎉  You are ready! Defend Olympus!';
+        tutorialHint.value = '⚡  Pushes fill your POWER bar — then TAP it for a blast!';
         _tutTimer += dt;
-        if (_tutTimer > 2.2) _finishTutorial();
+        if (_tutTimer > 1.4) _finishTutorial();
     }
   }
 

@@ -31,6 +31,7 @@ class _ArenaScreenState extends State<ArenaScreen>
   bool _configured = false;
   bool _paused = false;
   bool _gameOver = false;
+  bool _tutorialDone = false;
 
   Offset _swipeStart = Offset.zero;
   bool _swipeFired = false;
@@ -76,7 +77,8 @@ class _ArenaScreenState extends State<ArenaScreen>
 
   void _onTutorialDone() {
     _loop.stop();
-    if (mounted) Navigator.of(context).pushReplacementNamed('/sanctuary');
+    _world.shakeOffset = Offset.zero;
+    if (mounted) setState(() => _tutorialDone = true);
   }
 
   @override
@@ -193,6 +195,12 @@ class _ArenaScreenState extends State<ArenaScreen>
                 if (_paused) _PauseOverlay(onResume: _resume, onQuit: _quit),
                 if (_gameOver)
                   _GameOverOverlay(world: _world, onRetry: _restart, onQuit: _quit),
+                if (_tutorialDone)
+                  _TutorialDoneOverlay(
+                    accent: _world.deity.accent,
+                    onStart: () =>
+                        Navigator.of(context).pushReplacementNamed('/sanctuary'),
+                  ),
               ],
               ),
             ),
@@ -276,6 +284,46 @@ class _PauseOverlay extends StatelessWidget {
             accent: AegisPalette.underViolet,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TutorialDoneOverlay extends StatelessWidget {
+  const _TutorialDoneOverlay({required this.onStart, required this.accent});
+  final VoidCallback onStart;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black.withValues(alpha: 0.8),
+      alignment: Alignment.center,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.85, end: 1),
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutBack,
+        builder: (_, s, child) => Transform.scale(scale: s, child: child),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('✅', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 16),
+            Text('TRAINING COMPLETE',
+                style: Glyph.title(size: 24, shadows: Glyph.goldGlow())),
+            const SizedBox(height: 10),
+            Text('You are ready to defend Olympus!',
+                style: Glyph.label(size: 14, color: AegisPalette.parchment)),
+            const SizedBox(height: 28),
+            AegisButton(
+              label: 'START GAME',
+              sigil: '⚔',
+              width: 280,
+              accent: accent,
+              onTap: onStart,
+            ),
+          ],
+        ),
       ),
     );
   }
