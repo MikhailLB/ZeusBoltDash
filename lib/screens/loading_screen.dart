@@ -14,15 +14,10 @@ class LoadingScreen extends StatefulWidget {
 
 class _LoadingScreenState extends State<LoadingScreen>
     with SingleTickerProviderStateMixin {
-  VideoPlayerController? _portraitVideo;
-  VideoPlayerController? _landscapeVideo;
-
-  bool _videosReady = false;
-  bool _showBar    = false;
-  bool _navigated  = false;
-
-  VoidCallback? _portraitListener;
-  VoidCallback? _landscapeListener;
+  VideoPlayerController? _video;
+  bool _videoReady = false;
+  bool _showBar = false;
+  bool _navigated = false;
 
   late final AnimationController _progressCtrl;
 
@@ -33,14 +28,8 @@ class _LoadingScreenState extends State<LoadingScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-
     _progressCtrl = AnimationController(vsync: this, duration: _barDuration);
     _initialise();
   }
@@ -51,24 +40,21 @@ class _LoadingScreenState extends State<LoadingScreen>
     await Future.wait([
       StorageService.instance.init(),
       VibrationService.instance.init(),
-      _initVideos(),
+      _initVideo(),
     ]);
 
     if (!mounted) return;
-    setState(() => _videosReady = true);
+    setState(() => _videoReady = true);
 
-    // Small delay so the video frame renders before bar appears
     await Future.delayed(_barDelay);
     if (!mounted) return;
     setState(() => _showBar = true);
 
-    // Run bar animation + asset precaching in parallel
     await Future.wait([
       _progressCtrl.forward(),
       _precacheGameAssets(),
     ]);
 
-    // Ensure minimum screen time
     final elapsed = DateTime.now().difference(start);
     if (elapsed < _minDuration) {
       await Future.delayed(_minDuration - elapsed);
@@ -78,39 +64,18 @@ class _LoadingScreenState extends State<LoadingScreen>
     _goToMenu();
   }
 
-  Future<void> _initVideos() async {
+  Future<void> _initVideo() async {
     try {
-      final p = VideoPlayerController.asset(
+      final c = VideoPlayerController.asset(
           'assets/Loading/Vertical_Loading_Screen.mp4');
-      final l = VideoPlayerController.asset(
-          'assets/Loading/Horizontal_Loading_Screen.mp4');
-
-      await Future.wait([p.initialize(), l.initialize()]);
-
-      for (final c in [p, l]) {
-        c.setLooping(true);
-        c.setVolume(0);
-      }
-      await Future.wait([p.play(), l.play()]);
-
-      _portraitListener  = () => _restartIfEnded(p);
-      _landscapeListener = () => _restartIfEnded(l);
-      p.addListener(_portraitListener!);
-      l.addListener(_landscapeListener!);
-
-      _portraitVideo  = p;
-      _landscapeVideo = l;
+      await c.initialize();
+      c.setLooping(true);
+      c.setVolume(0);
+      await c.play();
+      _video = c;
     } catch (e) {
       debugPrint('LoadingScreen: video init failed: $e');
     }
-  }
-
-  void _restartIfEnded(VideoPlayerController c) {
-    if (!c.value.isInitialized) return;
-    if (c.value.isPlaying) return;
-    if (c.value.position < c.value.duration) return;
-    c.seekTo(Duration.zero);
-    c.play();
   }
 
   Future<void> _precacheGameAssets() async {
@@ -148,16 +113,12 @@ class _LoadingScreenState extends State<LoadingScreen>
   void _goToMenu() {
     if (_navigated || !mounted) return;
     _navigated = true;
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     Navigator.of(context).pushReplacementNamed('/menu');
   }
 
   @override
   void dispose() {
-    _portraitVideo?.removeListener(_portraitListener ?? () {});
-    _landscapeVideo?.removeListener(_landscapeListener ?? () {});
-    _portraitVideo?.dispose();
-    _landscapeVideo?.dispose();
+    _video?.dispose();
     _progressCtrl.dispose();
     super.dispose();
   }
@@ -171,113 +132,55 @@ class _LoadingScreenState extends State<LoadingScreen>
     }
   }
 
-  Widget _buildBarPositioned(bool isPortrait, BuildContext context) {
-    final bar = AnimatedBuilder(
-      animation: _progressCtrl,
-      builder: (_, __) {
-        final state =
-            (_progressCtrl.value * 4).clamp(0.0, 4.0).floor().clamp(1, 4);
-        return _LoadingBar(asset: _barAsset(state), isPortrait: isPortrait);
-      },
-    );
-
-    if (isPortrait) {
-      // Portrait: bar lives at the very bottom of the screen
-      return Positioned(
-        left: 0, right: 0, bottom: 0,
-        child: Center(child: bar),
-      );
-    }
-
-    // Landscape: the video places "LOADING" text near the vertical centre.
-    // Align our bar slightly BELOW centre so it appears under that text.
-    return Positioned.fill(
-      child: Align(
-        alignment: const Alignment(0.0, 0.72),
-        child: bar,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          final isPortrait = orientation == Orientation.portrait;
-          final controller =
-              isPortrait ? _portraitVideo : _landscapeVideo;
-
-          // Kick the right video if it stopped
-          if (controller != null && controller.value.isInitialized) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!controller.value.isPlaying) {
-                controller.play();
-              }
-            });
-          }
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              // ── Video ──────────────────────────────────────────────
-              if (_videosReady &&
-                  controller != null &&
-                  controller.value.isInitialized)
-                _FullCoverVideo(controller: controller)
-              else
-                const ColoredBox(color: Colors.black),
-
-              // ── Loading bar ────────────────────────────────────────
-              if (_showBar)
-                _buildBarPositioned(isPortrait, context),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ── Widgets ────────────────────────────────────────────────────────────────
-
-class _FullCoverVideo extends StatelessWidget {
-  const _FullCoverVideo({required this.controller});
-  final VideoPlayerController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRect(
-      child: SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: controller.value.size.width,
-            height: controller.value.size.height,
-            child: VideoPlayer(controller),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadingBar extends StatelessWidget {
-  const _LoadingBar({required this.asset, required this.isPortrait});
-  final String asset;
-  final bool isPortrait;
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    // Portrait: 70% of width. Landscape: 40% of HEIGHT (keeps it proportional)
-    final width = isPortrait ? size.width * 0.70 : size.height * 0.40;
-    return Image.asset(
-      asset,
-      width: width,
-      fit: BoxFit.contain,
-      gaplessPlayback: true, // no flicker between states
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ── Portrait video ─────────────────────────────────────────────
+          if (_videoReady && _video != null && _video!.value.isInitialized)
+            ClipRect(
+              child: SizedBox.expand(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _video!.value.size.width,
+                    height: _video!.value.size.height,
+                    child: VideoPlayer(_video!),
+                  ),
+                ),
+              ),
+            )
+          else
+            const ColoredBox(color: Colors.black),
+
+          // ── Loading bar ────────────────────────────────────────────────
+          if (_showBar)
+            Positioned(
+              left: 0, right: 0, bottom: 0,
+              child: Center(
+                child: AnimatedBuilder(
+                  animation: _progressCtrl,
+                  builder: (_, __) {
+                    final state = (_progressCtrl.value * 4)
+                        .clamp(0.0, 4.0)
+                        .floor()
+                        .clamp(1, 4);
+                    return Image.asset(
+                      _barAsset(state),
+                      width: size.width * 0.70,
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
