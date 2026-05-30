@@ -1,7 +1,7 @@
 name: zeus_bolt_dash
 description: Olympus Aegis — a divine parry-defense arena built on a custom engine.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
