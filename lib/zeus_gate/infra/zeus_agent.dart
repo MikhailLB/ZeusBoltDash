@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:http/http.dart' as http;
-import '../config/flash_endpoint.dart';
+import '../config/secret_atlas.dart';
 
 String _androidUa({required int sdk, required String brand,
     required String model, required String build}) =>

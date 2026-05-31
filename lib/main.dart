@@ -17,8 +17,7 @@ import 'zeus_gate/infra/olympus_probe.dart';
 Future<void> _bootFirebase() async {
   try {
     await Firebase.initializeApp();
-  } catch (err) {
-    debugPrint('[ZBD.BOOT] Firebase init skipped: $err');
+  } catch (_) {
     return;
   }
   try {
@@ -29,11 +28,10 @@ Future<void> _bootFirebase() async {
           ? AppleProvider.debug
           : AppleProvider.appAttestWithDeviceCheckFallback,
     );
-  } catch (err) { debugPrint('[ZBD.BOOT] AppCheck skipped: $err'); }
+  } catch (_) {}
 }
 
 Future<void> main() async {
-  final sw = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
 
   // Allow all orientations — gray flow screens (ZeusGate, Altar,
@@ -54,25 +52,17 @@ Future<void> main() async {
   final firebaseFuture = _bootFirebase();
   final agentFuture    = zeusAgent.warmup();
   final vault          = FlashVault();
-  final vaultFuture    = vault.init().catchError((err) {
-    debugPrint('[ZBD.BOOT] vault init failed: $err');
-  });
+  final vaultFuture    = vault.init().catchError((_) {});
 
   await firebaseFuture;
-  debugPrint('[ZBD.BOOT] firebase ready ${sw.elapsedMilliseconds}ms');
   await Future.wait([agentFuture, vaultFuture]);
-  debugPrint('[ZBD.BOOT] agent+vault ready ${sw.elapsedMilliseconds}ms');
 
   final probe    = OlympusProbe();
   final signal   = BoltSignal();
   final dispatch = BoltDispatch(vault);
   final relay    = VoltRelay(vault);
 
-  unawaited(relay.bootstrap().catchError((err) {
-    debugPrint('[ZBD.BOOT] relay pre-fire: $err');
-  }));
-
-  debugPrint('[ZBD.BOOT] ready ${sw.elapsedMilliseconds}ms');
+  unawaited(relay.bootstrap().catchError((_) {}));
 
   runApp(ZeusGateApp(
     vault: vault,

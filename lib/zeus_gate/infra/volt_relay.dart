@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'zeus_agent.dart';
@@ -78,10 +78,7 @@ class VoltRelay {
       }
       _token = await _fcm!.getToken();
       _ready = true;
-      debugPrint('[ZBD.VR] bootstrap OK token=${_token == null ? 'null' : 'present'}');
-      if (kDebugMode && _token != null) debugPrint('[ZBD.VR] FCM TOKEN: $_token');
-    } catch (err) {
-      debugPrint('[ZBD.VR] bootstrap error: $err');
+    } catch (_) {
     } finally {
       if (!_coldGate.isCompleted) _coldGate.complete();
     }
@@ -95,7 +92,6 @@ class VoltRelay {
         final url = _extractUrl(msg);
         if (url != null) {
           await _vault.stashOneShotUrl(url);
-          debugPrint('[ZBD.VR] cold-start url stashed');
         }
       }
     } catch (_) {}
@@ -227,8 +223,7 @@ class VoltRelay {
       }
       await _vault.writePushConsent(ok);
       return ok;
-    } catch (err) {
-      debugPrint('[ZBD.VR] askConsent error: $err');
+    } catch (_) {
       return false;
     }
   }
@@ -290,10 +285,8 @@ class VoltRelay {
   void _dispatchUrl(String url, {required String from}) {
     final cb = onPushUrl;
     if (cb != null) {
-      debugPrint('[ZBD.VR] dispatch ($from) → live browser');
       cb(url);
     } else {
-      debugPrint('[ZBD.VR] dispatch ($from) → stash');
       _vault.stashOneShotUrl(url);
     }
   }

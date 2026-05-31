@@ -72,8 +72,8 @@ class _BootScreenState extends State<BootScreen>
       await Future.wait([p.play(), l.play()]);
       _portrait = p;
       _landscape = l;
-    } catch (e) {
-      debugPrint('BootScreen: video init failed: $e');
+    } catch (_) {
+      // video is decorative — ignore init failures
     }
   }
 

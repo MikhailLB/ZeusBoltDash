@@ -11,34 +11,50 @@ import 'dart:typed_data';
 /// ⚠️  Always run with `dart run`, NEVER PowerShell foreach loops.
 /// PowerShell overflows 32-bit integers → wrong byte values.
 ///
-/// The _seedBytes MUST match _seedBytes in lib/zeus_vault/volt_cipher.dart.
+/// The seed + mixing below MUST match lib/zeus_vault/volt_cipher.dart
+/// exactly, otherwise decoded values come out as garbage.
 /// ════════════════════════════════════════════════════════════
 
-const _seedBytes = <int>[
-  0x7A, 0x65, 0x75, 0x73, 0x2E, 0x62, 0x6F, 0x6C,
-  0x74, 0x2E, 0x64, 0x61, 0x73, 0x68, 0x2E, 0x31,
+const _seed = <int>[
+  0x61, 0x65, 0x67, 0x69, 0x73, 0x3A, 0x6F, 0x6C,
+  0x79, 0x6D, 0x70, 0x75, 0x73, 0x3A, 0x76, 0x32,
+  0x2D, 0x62, 0x6F, 0x6C, 0x74,
 ];
 
-Uint8List _buildKeyStream(int size) {
-  var hash = 0x811C9DC5;
-  for (final b in _seedBytes) {
-    hash = ((hash ^ b) * 0x01000193) & 0xFFFFFFFF;
+const int _streamLen = 96;
+const int _mask64 = -1; // 0xFFFFFFFFFFFFFFFF as signed two's-complement
+
+int _seedState() {
+  var h = 0xCBF29CE484222325;
+  for (final b in _seed) {
+    h = (h ^ b) * 0x100000001B3;
   }
+  return h & _mask64;
+}
+
+Uint8List _streamBytes(int size) {
+  var state = _seedState();
   final out = Uint8List(size);
-  var state = hash == 0 ? 0x0A0520FF : hash;
   for (var i = 0; i < size; i++) {
-    state = (state * 6364136223846793005 + 1442695040888963407) & 0x7FFFFFFF;
-    out[i] = (state >> 13) & 0xFF;
+    state = (state + 0x9E3779B97F4A7C15) & _mask64;
+    var z = state;
+    z = ((z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9) & _mask64;
+    z = ((z ^ (z >>> 27)) * 0x94D049BB133111EB) & _mask64;
+    z = z ^ (z >>> 31);
+    out[i] = z & 0xFF;
   }
   return out;
 }
 
-final _stream = _buildKeyStream(64);
+final _stream = _streamBytes(_streamLen);
+
+int _drift(int i) => ((i * 0x3B) + 0x11) & 0xFF;
 
 List<int> encode(String s) {
+  final n = _stream.length;
   final out = <int>[];
   for (var i = 0; i < s.length; i++) {
-    out.add(s.codeUnitAt(i) ^ _stream[i % _stream.length]);
+    out.add(s.codeUnitAt(i) ^ _stream[(i * 5 + 7) % n] ^ _drift(i));
   }
   return out;
 }
@@ -55,23 +71,23 @@ void main() {
   const privacyUrl   = 'https://zeusboltdash.com/privacy-policy.html';
   const supportUrl   = 'https://zeusboltdash.com/support.html';
 
-  print('// ── flash_endpoint.dart ─────────────────────────');
-  print('const h = ${fmt(encode(configHost))};  // host');
-  print('const p = ${fmt(encode(configPath))};  // path');
+  print('// ── endpoint host + path ─────────────────────────');
+  print('const h = ${fmt(encode(configHost))};');
+  print('const p = ${fmt(encode(configPath))};');
   print('');
-  print('// ── flash_endpoint.dart — GCD ───────────────────');
+  print('// ── GCD host ─────────────────────────────────────');
   print('const _gcdMask = ${fmt(encode(gcdHost))};');
   print('');
-  print('// ── volt_keys.dart — AppsFlyer key ───────────────');
-  print('const v = ${fmt(encode(appsflyerKey))};');
+  print('// ── AppsFlyer key ────────────────────────────────');
+  print('const _afKey = ${fmt(encode(appsflyerKey))};');
   print('');
-  print('// ── volt_keys.dart — Firebase project number ─────');
-  print('const v = ${fmt(encode(firebaseProj))};');
+  print('// ── Firebase project number ──────────────────────');
+  print('const _fbProj = ${fmt(encode(firebaseProj))};');
   print('');
-  print('// ── olympus_links.dart — privacy URL ─────────────');
+  print('// ── privacy URL ──────────────────────────────────');
   print('const _privacyMask = ${fmt(encode(privacyUrl))};');
   print('');
-  print('// ── olympus_links.dart — support URL ─────────────');
+  print('// ── support URL ──────────────────────────────────');
   print('const _supportMask = ${fmt(encode(supportUrl))};');
   print('');
   print('// ── VERIFICATION ─────────────────────────────────');

@@ -21,6 +21,7 @@
 		ZDB00001000000000000001A /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ZDB00001000000000000006A /* NotificationService.swift */; };
 		ZDB00001000000000000002A /* NotificationService.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = ZDB00001000000000000008A /* NotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ZDB00001000000000000003A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ZDB00001000000000000009A /* GoogleService-Info.plist */; };
+		ZDB0000100000000000000BA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = ZDB0000100000000000000CA /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +98,7 @@
 		ZDB00001000000000000007A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		ZDB00001000000000000008A /* NotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		ZDB00001000000000000009A /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		ZDB0000100000000000000CA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ZDB0000100000000000000AA /* Runner.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -184,6 +186,7 @@
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 				ZDB00001000000000000009A /* GoogleService-Info.plist */,
 				ZDB0000100000000000000AA /* Runner.entitlements */,
+				ZDB0000100000000000000CA /* PrivacyInfo.xcprivacy */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -344,6 +347,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ZDB00001000000000000003A /* GoogleService-Info.plist in Resources */,
+				ZDB0000100000000000000BA /* PrivacyInfo.xcprivacy in Resources */,
 				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,

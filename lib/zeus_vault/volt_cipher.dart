@@ -1,39 +1,55 @@
 import 'dart:typed_data';
 
-/// XOR-based string obfuscation for secrets stored as byte arrays.
+/// String obfuscation for secrets stored as byte arrays.
 ///
-/// Seed `zeus.bolt.dash.1` is unique to ZeusBoltDash — byte arrays
-/// produced here are NOT interchangeable with any other project,
-/// even for identical plaintext values.
-const _seedBytes = <int>[
-  0x7A, 0x65, 0x75, 0x73, 0x2E, 0x62, 0x6F, 0x6C,
-  0x74, 0x2E, 0x64, 0x61, 0x73, 0x68, 0x2E, 0x31,
+/// The keystream is derived from a project-unique seed through a
+/// SplitMix64 mixer, then combined with the ciphertext via XOR plus a
+/// position-dependent drift term. The scheme is bespoke to ZeusBoltDash —
+/// byte arrays produced here are not interchangeable with any sibling
+/// build even for identical plaintext.
+const _seed = <int>[
+  0x61, 0x65, 0x67, 0x69, 0x73, 0x3A, 0x6F, 0x6C,
+  0x79, 0x6D, 0x70, 0x75, 0x73, 0x3A, 0x76, 0x32,
+  0x2D, 0x62, 0x6F, 0x6C, 0x74,
 ];
 
-Uint8List _buildKeyStream(int size) {
-  var hash = 0x811C9DC5;
-  for (final b in _seedBytes) {
-    hash = ((hash ^ b) * 0x01000193) & 0xFFFFFFFF;
+const int _streamLen = 96;
+const int _mask64 = -1; // 0xFFFFFFFFFFFFFFFF as signed two's-complement
+
+int _seedState() {
+  var h = 0xCBF29CE484222325;
+  for (final b in _seed) {
+    h = (h ^ b) * 0x100000001B3;
   }
+  return h & _mask64;
+}
+
+Uint8List _buildStream(int size) {
+  var state = _seedState();
   final out = Uint8List(size);
-  var state = hash == 0 ? 0x0A0520FF : hash;
   for (var i = 0; i < size; i++) {
-    state = (state * 6364136223846793005 + 1442695040888963407) & 0x7FFFFFFF;
-    out[i] = (state >> 13) & 0xFF;
+    state = (state + 0x9E3779B97F4A7C15) & _mask64;
+    var z = state;
+    z = ((z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9) & _mask64;
+    z = ((z ^ (z >>> 27)) * 0x94D049BB133111EB) & _mask64;
+    z = z ^ (z >>> 31);
+    out[i] = z & 0xFF;
   }
   return out;
 }
 
-final _keyStream = _buildKeyStream(64);
+final Uint8List _stream = _buildStream(_streamLen);
 
-/// Decode an XOR-encoded byte list back to its plaintext string.
-/// Use `tool/encode_creds.dart` to produce byte arrays for new values.
+int _drift(int i) => ((i * 0x3B) + 0x11) & 0xFF;
+
+/// Decode an obfuscated byte list back to its plaintext string.
+/// Produce new byte arrays with `tool/encode_creds.dart`.
 String decrypt(List<int> raw) {
   if (raw.isEmpty) return '';
-  final n = _keyStream.length;
+  final n = _stream.length;
   final out = Uint8List(raw.length);
   for (var i = 0; i < raw.length; i++) {
-    out[i] = raw[i] ^ _keyStream[i % n];
+    out[i] = raw[i] ^ _stream[(i * 5 + 7) % n] ^ _drift(i);
   }
   return String.fromCharCodes(out);
 }

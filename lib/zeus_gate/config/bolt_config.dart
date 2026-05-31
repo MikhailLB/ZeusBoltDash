@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'flash_endpoint.dart';
-import 'volt_keys.dart';
-import 'olympus_links.dart';
+import 'secret_atlas.dart';
 
 abstract final class BoltConfig {
   static const String iosStoreId = '6771217833';

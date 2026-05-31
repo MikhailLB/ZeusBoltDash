@@ -7,7 +7,7 @@ import 'package:appsflyer_sdk/appsflyer_sdk.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import '../config/flash_endpoint.dart';
+import '../config/secret_atlas.dart';
 import '../config/bolt_config.dart';
 import 'zeus_agent.dart';
 
@@ -29,7 +29,6 @@ class BoltSignal {
   Future<void> _doWarmup() async {
     if (_started) return;
     final devKey = BoltConfig.installKey;
-    debugPrint('[ZBD.BS] warmup devKeyLen=${devKey.length}');
     if (devKey.isEmpty) {
       _started = true;
       if (!_conversionDone.isCompleted) _conversionDone.complete({});
@@ -54,9 +53,7 @@ class BoltSignal {
         registerOnAppOpenAttributionCallback: true,
         registerOnDeepLinkingCallback: true,
       );
-      debugPrint('[ZBD.BS] initSdk OK');
-    } catch (err) {
-      debugPrint('[ZBD.BS] warmup error: $err');
+    } catch (_) {
       if (!_conversionDone.isCompleted) _conversionDone.complete({});
       if (!_deepLinkDone.isCompleted) _deepLinkDone.complete();
     }
@@ -69,7 +66,7 @@ class BoltSignal {
       await WidgetsBinding.instance.endOfFrame;
       await Future.delayed(const Duration(milliseconds: 300));
       await AppTrackingTransparency.requestTrackingAuthorization();
-    } catch (err) { debugPrint('[ZBD.BS] ATT skipped: $err'); }
+    } catch (_) {}
   }
 
   Map<String, dynamic> _flatten(dynamic raw) {
@@ -81,7 +78,6 @@ class BoltSignal {
 
   void _onConversion(dynamic raw) async {
     final data = _flatten(raw);
-    debugPrint('[ZBD.BS] conversion ${jsonEncode(data)}');
     if (data['af_status'] == 'Organic') {
       await Future.delayed(Duration(seconds: BoltConfig.organicRetrySeconds));
       final retry = await _refreshGcd();
@@ -162,7 +158,6 @@ class BoltSignal {
       body['firebase_project_id'] = BoltConfig.firebaseNumber;
     }
 
-    debugPrint('[ZBD.BS] payload keys=${body.keys.toList()}');
     return body;
   }
 }

@@ -1,6 +1,7 @@
+import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/volt_mode.dart';
+import '../models/gate_types.dart';
 
 class FlashVault {
   static const _kMode         = 'zbd.gate.mode';
@@ -9,6 +10,10 @@ class FlashVault {
   static const _kSavedUrl     = 'zbd.gate.url';
   static const _kUrlTtl       = 'zbd.gate.url.ttl';
   static const _kOneShotUrl   = 'zbd.gate.push.oneshot';
+
+  // UserDefaults key written by SceneDelegate on a cold-start push tap.
+  // SharedPreferences prepends the `flutter.` namespace automatically.
+  static const _kNativeColdUrl = 'zbd_gate_cold_url';
 
   late SharedPreferences _prefs;
   final FlutterSecureStorage _safe = const FlutterSecureStorage();
@@ -58,5 +63,19 @@ class FlashVault {
       if (v != null) await _safe.delete(key: _kOneShotUrl);
       return v;
     } catch (_) { return null; }
+  }
+
+  /// Reads (and clears) the cold-start URL that the native scene layer
+  /// captured before Dart code began executing. iOS only.
+  Future<String?> consumeNativeColdUrl() async {
+    if (!Platform.isIOS) return null;
+    try {
+      final raw = _prefs.getString(_kNativeColdUrl);
+      if (raw == null || raw.trim().isEmpty) return null;
+      await _prefs.remove(_kNativeColdUrl);
+      return raw.trim();
+    } catch (_) {
+      return null;
+    }
   }
 }

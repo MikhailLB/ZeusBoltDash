@@ -28,6 +28,8 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.games</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Zeus Bolt Dash uses your data to personalize in-game offers and measure how well our promotions perform.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>https</string>

@@ -10,8 +10,7 @@ import '../infra/bolt_signal.dart';
 import '../infra/flash_vault.dart';
 import '../infra/volt_relay.dart';
 import '../infra/olympus_probe.dart';
-import '../infra/zeus_link_bridge.dart';
-import '../models/volt_mode.dart';
+import '../models/gate_types.dart';
 import 'oracle_view.dart';
 import 'altar_screen.dart';
 import 'exile_screen.dart';
@@ -85,9 +84,8 @@ class _ZeusGateState extends State<ZeusGate> {
     widget.relay.onTokenRefresh = _onTokenRefresh;
 
     // ── HIGHEST PRIORITY: SceneDelegate cold-start URL ──────────
-    final nativeColdUrl = await ZeusLinkBridge.consumeTapUrl();
+    final nativeColdUrl = await widget.vault.consumeNativeColdUrl();
     if (nativeColdUrl != null && nativeColdUrl.isNotEmpty) {
-      debugPrint('[ZBD.ZG] native cold-start url → $nativeColdUrl');
       await widget.vault.writeMode(VoltMode.web);
       await widget.vault.consumeOneShotUrl();
       unawaited(_backgroundDispatch());
@@ -142,7 +140,7 @@ class _ZeusGateState extends State<ZeusGate> {
         pushToken: widget.relay.token,
       );
       await widget.dispatch.send(body);
-    } catch (e) { debugPrint('[ZBD.ZG] background dispatch error: $e'); }
+    } catch (_) {}
   }
 
   void _onTokenRefresh(String token) async {
