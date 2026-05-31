@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../screens/menu_screen.dart';
+import '../../presentation/sanctuary/sanctuary_screen.dart';
 import '../infra/bolt_dispatch.dart';
 import '../infra/bolt_signal.dart';
 import '../infra/flash_vault.dart';
@@ -294,13 +294,12 @@ class _ZeusGateState extends State<ZeusGate> {
     ));
   }
 
-  /// Navigate to white game directly at MenuScreen — skip LoadingScreen
-  /// since ZeusGate already serves as the loading experience.
+  /// Navigate to white game directly at SanctuaryScreen — skip ZeusGate loading.
   void _navigateToGame() {
     if (_routed) return;
     _routed = true;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MenuScreen()),
+      MaterialPageRoute(builder: (_) => const SanctuaryScreen()),
     );
   }
 
