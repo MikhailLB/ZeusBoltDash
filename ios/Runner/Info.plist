@@ -30,6 +30,12 @@
 	<string>public.app-category.games</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Zeus Bolt Dash uses your data to personalize in-game offers and measure how well our promotions perform.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Zeus Bolt Dash needs access to your photo library to upload files.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Zeus Bolt Dash needs camera access to upload photos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Zeus Bolt Dash needs microphone access for media playback.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>https</string>
