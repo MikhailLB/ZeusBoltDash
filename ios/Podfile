@@ -33,7 +33,6 @@ end
 
 target 'NotificationService' do
   use_frameworks!
-  pod 'Firebase/Messaging'
 end
 
 post_install do |installer|
