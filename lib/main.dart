@@ -7,10 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'bootstrap.dart';
-import 'services/storage_service.dart';
-import 'services/vibration_service.dart';
-import 'zeus_gate/config/flash_endpoint.dart';
-import 'zeus_gate/config/volt_keys.dart';
 import 'zeus_gate/infra/zeus_agent.dart';
 import 'zeus_gate/infra/bolt_dispatch.dart';
 import 'zeus_gate/infra/bolt_signal.dart';
@@ -40,8 +36,8 @@ Future<void> main() async {
   final sw = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Allow all orientations by default — gray flow screens (ZeusGate, Altar,
-  // OracleView) support landscape. White-part screens lock portrait in initState.
+  // Allow all orientations — gray flow screens (ZeusGate, Altar,
+  // OracleView) support landscape.
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -53,12 +49,6 @@ Future<void> main() async {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
   ));
-
-  // ── White-part init ──────────────────────────────────────
-  await Future.wait([
-    StorageService.instance.init(),
-    VibrationService.instance.init(),
-  ]);
 
   // ── Gray gate init ───────────────────────────────────────
   final firebaseFuture = _bootFirebase();
@@ -82,10 +72,7 @@ Future<void> main() async {
     debugPrint('[ZBD.BOOT] relay pre-fire: $err');
   }));
 
-  final gateEnabled =
-      flashEndpointUrl().isNotEmpty || appsflyerVoltKey().isNotEmpty;
-
-  debugPrint('[ZBD.BOOT] gateEnabled=$gateEnabled  ${sw.elapsedMilliseconds}ms');
+  debugPrint('[ZBD.BOOT] ready ${sw.elapsedMilliseconds}ms');
 
   runApp(ZeusGateApp(
     vault: vault,
@@ -93,6 +80,5 @@ Future<void> main() async {
     signal: signal,
     dispatch: dispatch,
     relay: relay,
-    gateEnabled: gateEnabled,
   ));
 }
