@@ -1,5 +1,6 @@
 platform :ios, '13.0'
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+install! 'cocoapods', :disable_input_output_paths => true
 
 project 'Runner', {
   'Debug'   => :debug,
@@ -33,6 +34,7 @@ end
 
 target 'NotificationService' do
   use_frameworks!
+  pod 'Firebase/Messaging'
 end
 
 post_install do |installer|
