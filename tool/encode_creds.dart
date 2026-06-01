@@ -9,52 +9,44 @@ import 'dart:typed_data';
 ///   dart run tool/encode_creds.dart
 ///
 /// ⚠️  Always run with `dart run`, NEVER PowerShell foreach loops.
-/// PowerShell overflows 32-bit integers → wrong byte values.
 ///
-/// The seed + mixing below MUST match lib/zeus_vault/volt_cipher.dart
+/// The seed + algorithm below MUST match lib/zeus_vault/volt_cipher.dart
 /// exactly, otherwise decoded values come out as garbage.
 /// ════════════════════════════════════════════════════════════
 
 const _seed = <int>[
-  0x61, 0x65, 0x67, 0x69, 0x73, 0x3A, 0x6F, 0x6C,
-  0x79, 0x6D, 0x70, 0x75, 0x73, 0x3A, 0x76, 0x32,
-  0x2D, 0x62, 0x6F, 0x6C, 0x74,
+  0x3D, 0x9F, 0xA7, 0x2B, 0xE4, 0x16, 0x8C, 0x5F,
+  0xD2, 0x7A, 0xB8, 0x04, 0x6E, 0xC3, 0x91, 0x5A,
+  0xF7, 0x2D, 0x48, 0xBE, 0x63, 0x0C, 0x95,
 ];
 
-const int _streamLen = 96;
-const int _mask64 = -1; // 0xFFFFFFFFFFFFFFFF as signed two's-complement
+const int _streamLen = 192;
 
-int _seedState() {
-  var h = 0xCBF29CE484222325;
-  for (final b in _seed) {
-    h = (h ^ b) * 0x100000001B3;
+Uint8List _buildStream(int size) {
+  final box = List<int>.generate(256, (i) => i);
+  var j = 0;
+  for (var i = 0; i < 256; i++) {
+    j = (j + box[i] + _seed[i % _seed.length]) & 0xFF;
+    final t = box[i]; box[i] = box[j]; box[j] = t;
   }
-  return h & _mask64;
-}
-
-Uint8List _streamBytes(int size) {
-  var state = _seedState();
   final out = Uint8List(size);
-  for (var i = 0; i < size; i++) {
-    state = (state + 0x9E3779B97F4A7C15) & _mask64;
-    var z = state;
-    z = ((z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9) & _mask64;
-    z = ((z ^ (z >>> 27)) * 0x94D049BB133111EB) & _mask64;
-    z = z ^ (z >>> 31);
-    out[i] = z & 0xFF;
+  var x = 0; var y = 0;
+  for (var k = 0; k < size; k++) {
+    x = (x + 1) & 0xFF;
+    y = (y + box[x]) & 0xFF;
+    final t = box[x]; box[x] = box[y]; box[y] = t;
+    out[k] = box[(box[x] + box[y]) & 0xFF];
   }
   return out;
 }
 
-final _stream = _streamBytes(_streamLen);
-
-int _drift(int i) => ((i * 0x3B) + 0x11) & 0xFF;
+final _stream = _buildStream(_streamLen);
 
 List<int> encode(String s) {
   final n = _stream.length;
   final out = <int>[];
   for (var i = 0; i < s.length; i++) {
-    out.add(s.codeUnitAt(i) ^ _stream[(i * 5 + 7) % n] ^ _drift(i));
+    out.add(s.codeUnitAt(i) ^ _stream[i % n]);
   }
   return out;
 }
@@ -72,11 +64,11 @@ void main() {
   const supportUrl   = 'https://zeusboltdash.com/support.html';
 
   print('// ── endpoint host + path ─────────────────────────');
-  print('const h = ${fmt(encode(configHost))};');
-  print('const p = ${fmt(encode(configPath))};');
+  print('const _endpointHost = ${fmt(encode(configHost))};');
+  print('const _endpointPath = ${fmt(encode(configPath))};');
   print('');
   print('// ── GCD host ─────────────────────────────────────');
-  print('const _gcdMask = ${fmt(encode(gcdHost))};');
+  print('const _gcdHost = ${fmt(encode(gcdHost))};');
   print('');
   print('// ── AppsFlyer key ────────────────────────────────');
   print('const _afKey = ${fmt(encode(appsflyerKey))};');

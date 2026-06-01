@@ -8,9 +8,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'zeus_agent.dart';
 import 'flash_vault.dart';
 
-const _channelId    = 'zbd_gate_push';
-const _channelLabel = 'Zeus Bolt Dash Alerts';
-const _iconRes      = '@drawable/ic_zbd_flash';
+const _channelId    = 'aeg_arena_push';
+const _channelLabel = 'Olympus Aegis Alerts';
+const _iconRes      = '@drawable/ic_aeg_bolt';
 
 @pragma('vm:entry-point')
 Future<void> _bgMsgHandler(RemoteMessage _) async {}

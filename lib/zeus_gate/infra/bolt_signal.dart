@@ -79,7 +79,7 @@ class BoltSignal {
   void _onConversion(dynamic raw) async {
     final data = _flatten(raw);
     if (data['af_status'] == 'Organic') {
-      await Future.delayed(Duration(seconds: BoltConfig.organicRetrySeconds));
+      await Future.delayed(const Duration(seconds: BoltConfig.organicRetrySeconds));
       final retry = await _refreshGcd();
       _conversion = retry ?? data;
     } else { _conversion = data; }

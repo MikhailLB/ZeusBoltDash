@@ -126,7 +126,7 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
         _wv.runJavaScript(
           "try{window.dispatchEvent(new Event('resize'));"
           "if(window.visualViewport)window.visualViewport.dispatchEvent(new Event('resize'));"
-          "if(typeof window.zqVeReflow==='function')window.zqVeReflow();}catch(e){}");
+          "if(typeof window.dpVsSync==='function')window.dpVsSync();}catch(e){}");
       });
     }
   }
@@ -253,8 +253,8 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
   void _tuneViewport() {
     _wv.runJavaScript(r'''
 (function(){
-  var W=window; if(W.zqVe)return; W.zqVe=1;
-  var TAG='zq-ve-style';
+  var W=window; if(W.dpVs)return; W.dpVs=1;
+  var TAG='dp-vs-css';
   var rules=[
     ':root{--safe-area-inset-top:0px!important;--safe-area-inset-right:0px!important;',
     '--safe-area-inset-bottom:0px!important;--safe-area-inset-left:0px!important;',
@@ -265,7 +265,7 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
     var vv=W.visualViewport;
     return vv ? vv.height < W.innerHeight*0.75 : false;
   }
-  function reflow(){
+  function applyLayout(){
     if(caretUp())return;
     var head=document.head||document.documentElement; if(!head)return;
     var meta=document.querySelector('meta[name=viewport]');
@@ -281,15 +281,15 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
     if(node.textContent!==rules)node.textContent=rules;
     if(head.lastElementChild!==node)head.appendChild(node);
   }
-  W.zqVeReflow=reflow;
-  reflow();
+  W.dpVsSync=applyLayout;
+  applyLayout();
   var nav=W.history;
   ['pushState','replaceState'].forEach(function(m){
     var src=nav[m];
-    nav[m]=function(){var out=src.apply(this,arguments);setTimeout(reflow,150);setTimeout(reflow,600);return out;};
+    nav[m]=function(){var out=src.apply(this,arguments);setTimeout(applyLayout,150);setTimeout(applyLayout,600);return out;};
   });
-  W.addEventListener('popstate',function(){setTimeout(reflow,150);});
-  setInterval(reflow,2500);
+  W.addEventListener('popstate',function(){setTimeout(applyLayout,150);});
+  setInterval(applyLayout,2500);
 })();
 ''');
   }
@@ -297,10 +297,10 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
   void _followCaret() {
     _wv.runJavaScript(r'''
 (function(){
-  var W=window; if(W.zqCp)return; W.zqCp=1;
-  function editable(n){ if(!n)return false; var t=n.tagName; return t==='INPUT'||t==='TEXTAREA'||n.isContentEditable===true; }
-  function bring(){
-    var el=document.activeElement; if(!editable(el))return;
+  var W=window; if(W.dpKf)return; W.dpKf=1;
+  function isEditable(n){ if(!n)return false; var t=n.tagName; return t==='INPUT'||t==='TEXTAREA'||n.isContentEditable===true; }
+  function scrollToActive(){
+    var el=document.activeElement; if(!isEditable(el))return;
     var vv=W.visualViewport;
     if(vv){
       var box=el.getBoundingClientRect();
@@ -311,11 +311,11 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
       el.scrollIntoView({behavior:'auto',block:'nearest'});
     }
   }
-  document.addEventListener('focusin',function(ev){ if(editable(ev.target))setTimeout(bring,350); });
+  document.addEventListener('focusin',function(ev){ if(isEditable(ev.target))setTimeout(scrollToActive,350); });
   var vv=W.visualViewport;
   if(vv){
-    var last=vv.height;
-    vv.addEventListener('resize',function(){ var h=vv.height; if(h<last)setTimeout(bring,120); last=h; });
+    var lastH=vv.height;
+    vv.addEventListener('resize',function(){ var h=vv.height; if(h<lastH)setTimeout(scrollToActive,120); lastH=h; });
   }
 })();
 ''');
@@ -325,8 +325,8 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
     if (!Platform.isIOS) return;
     _wv.runJavaScript(r'''
 (function(){
-  var W=window; if(W.zqFs)return; W.zqFs=1;
-  var st=document.createElement('style'); st.id='zq-fs';
+  var W=window; if(W.dpFx)return; W.dpFx=1;
+  var st=document.createElement('style'); st.id='dp-fx';
   st.appendChild(document.createTextNode('input,textarea,select,[contenteditable=true]{font-size:16px!important;}'));
   (document.head||document.documentElement).appendChild(st);
 })();
@@ -336,7 +336,7 @@ class _OracleViewState extends State<OracleView> with WidgetsBindingObserver {
   void _armMediaPlayback() {
     _wv.runJavaScript(r'''
 (function(){
-  var W=window; if(W.zqMp)return; W.zqMp=1;
+  var W=window; if(W.dpAv)return; W.dpAv=1;
   function arm(v){
     try{
       v.setAttribute('playsinline','');

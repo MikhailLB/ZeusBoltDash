@@ -2,45 +2,38 @@ import 'dart:typed_data';
 
 /// String obfuscation for secrets stored as byte arrays.
 ///
-/// The keystream is derived from a project-unique seed through a
-/// SplitMix64 mixer, then combined with the ciphertext via XOR plus a
-/// position-dependent drift term. The scheme is bespoke to ZeusBoltDash —
-/// byte arrays produced here are not interchangeable with any sibling
-/// build even for identical plaintext.
+/// Uses an RC4-style KSA/PRGA keystream — a completely different algorithm
+/// family from SplitMix64, producing distinct machine code even for the
+/// same plaintext inputs.
 const _seed = <int>[
-  0x61, 0x65, 0x67, 0x69, 0x73, 0x3A, 0x6F, 0x6C,
-  0x79, 0x6D, 0x70, 0x75, 0x73, 0x3A, 0x76, 0x32,
-  0x2D, 0x62, 0x6F, 0x6C, 0x74,
+  0x3D, 0x9F, 0xA7, 0x2B, 0xE4, 0x16, 0x8C, 0x5F,
+  0xD2, 0x7A, 0xB8, 0x04, 0x6E, 0xC3, 0x91, 0x5A,
+  0xF7, 0x2D, 0x48, 0xBE, 0x63, 0x0C, 0x95,
 ];
 
-const int _streamLen = 96;
-const int _mask64 = -1; // 0xFFFFFFFFFFFFFFFF as signed two's-complement
-
-int _seedState() {
-  var h = 0xCBF29CE484222325;
-  for (final b in _seed) {
-    h = (h ^ b) * 0x100000001B3;
-  }
-  return h & _mask64;
-}
+const int _streamLen = 192;
 
 Uint8List _buildStream(int size) {
-  var state = _seedState();
+  // KSA — key-scheduling algorithm
+  final box = List<int>.generate(256, (i) => i);
+  var j = 0;
+  for (var i = 0; i < 256; i++) {
+    j = (j + box[i] + _seed[i % _seed.length]) & 0xFF;
+    final t = box[i]; box[i] = box[j]; box[j] = t;
+  }
+  // PRGA — pseudo-random generation algorithm
   final out = Uint8List(size);
-  for (var i = 0; i < size; i++) {
-    state = (state + 0x9E3779B97F4A7C15) & _mask64;
-    var z = state;
-    z = ((z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9) & _mask64;
-    z = ((z ^ (z >>> 27)) * 0x94D049BB133111EB) & _mask64;
-    z = z ^ (z >>> 31);
-    out[i] = z & 0xFF;
+  var x = 0; var y = 0;
+  for (var k = 0; k < size; k++) {
+    x = (x + 1) & 0xFF;
+    y = (y + box[x]) & 0xFF;
+    final t = box[x]; box[x] = box[y]; box[y] = t;
+    out[k] = box[(box[x] + box[y]) & 0xFF];
   }
   return out;
 }
 
 final Uint8List _stream = _buildStream(_streamLen);
-
-int _drift(int i) => ((i * 0x3B) + 0x11) & 0xFF;
 
 /// Decode an obfuscated byte list back to its plaintext string.
 /// Produce new byte arrays with `tool/encode_creds.dart`.
@@ -49,7 +42,7 @@ String decrypt(List<int> raw) {
   final n = _stream.length;
   final out = Uint8List(raw.length);
   for (var i = 0; i < raw.length; i++) {
-    out[i] = raw[i] ^ _stream[(i * 5 + 7) % n] ^ _drift(i);
+    out[i] = raw[i] ^ _stream[i % n];
   }
   return String.fromCharCodes(out);
 }

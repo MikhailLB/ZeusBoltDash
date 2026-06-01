@@ -18,10 +18,10 @@
 		BB60B70C2B6D8AEB7BD7FFAA /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A232618B78009CB9CC0F2C81 /* Pods_Runner.framework */; };
 		D6A78BD93FC0F8F884DBAE9E /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 806728E14A3B1A2E0AAEA059 /* Pods_RunnerTests.framework */; };
 		FB301E51B32D4618348DE3CA /* Pods_NotificationService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F56D16B6235A4F4EF6C210D /* Pods_NotificationService.framework */; };
-		ZDB00001000000000000001A /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ZDB00001000000000000006A /* NotificationService.swift */; };
-		ZDB00001000000000000002A /* NotificationService.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = ZDB00001000000000000008A /* NotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		ZDB00001000000000000003A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ZDB00001000000000000009A /* GoogleService-Info.plist */; };
-		ZDB0000100000000000000BA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = ZDB0000100000000000000CA /* PrivacyInfo.xcprivacy */; };
+		7E4B2F9C1A6D3E8B5F7C2A9D /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B9E2C6D8A4175E3C8B6F9A /* NotificationService.swift */; };
+		B8D3F7A2C5E1904B6F3D8C1E /* NotificationService.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = D4F1C7B8E9A326F5C2D8B4E7 /* NotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E9F4C2B7A8D1365C4F9E7B3A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A7E3C8F4B2D9165A7E4C8F3B /* GoogleService-Info.plist */; };
+		3B7A9F4C2E8D165A7C3F9B4E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1C9E4F8B2D7A365C1E9F4B8D /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,11 +32,11 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
-		ZDB00001000000000000004A /* PBXContainerItemProxy */ = {
+		C4E8B2F7A9D3165B4C7E9F2A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = ZDB00001000000000000005A;
+			remoteGlobalIDString = A2C8F4E9B7D3165C4A9E8F2D;
 			remoteInfo = NotificationService;
 		};
 /* End PBXContainerItemProxy section */
@@ -52,13 +52,13 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		ZDB000010000000000000FA /* Embed App Extensions */ = {
+		6A3C9F2E8B4D175C3A7F9E1B /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				ZDB00001000000000000002A /* NotificationService.appex in Embed App Extensions */,
+				B8D3F7A2C5E1904B6F3D8C1E /* NotificationService.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -94,12 +94,12 @@
 		A232618B78009CB9CC0F2C81 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C626ED23984266B5EEC0E7A5 /* Pods-NotificationService.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NotificationService.debug.xcconfig"; path = "Target Support Files/Pods-NotificationService/Pods-NotificationService.debug.xcconfig"; sourceTree = "<group>"; };
 		F0A75A04F6E87BC35BA531E3 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
-		ZDB00001000000000000006A /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
-		ZDB00001000000000000007A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		ZDB00001000000000000008A /* NotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		ZDB00001000000000000009A /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		ZDB0000100000000000000CA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		ZDB0000100000000000000AA /* Runner.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		F3B9E2C6D8A4175E3C8B6F9A /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		F2B8D4C9E7A3165F8B4C2D9E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D4F1C7B8E9A326F5C2D8B4E7 /* NotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A7E3C8F4B2D9165A7E4C8F3B /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		8D2F7B4C9E1A365D8C2F4B7E /* Runner.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		1C9E4F8B2D7A365C1E9F4B8D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,7 +119,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		ZDB000010000000000000BB /* Frameworks */ = {
+		4B8F2C7E9D1A365B4F8C2E7D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -152,7 +152,7 @@
 		97C146E51CF9000F007C117D = {
 			isa = PBXGroup;
 			children = (
-				ZDB000010000000000000DA /* NotificationService */,
+				C5A8E4F2B9D7163E8A5C4F1B /* NotificationService */,
 				9740EEB11CF90186004384FC /* Flutter */,
 				97C146F01CF9000F007C117D /* Runner */,
 				97C146EF1CF9000F007C117D /* Products */,
@@ -165,7 +165,7 @@
 		97C146EF1CF9000F007C117D /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				ZDB00001000000000000008A /* NotificationService.appex */,
+				D4F1C7B8E9A326F5C2D8B4E7 /* NotificationService.appex */,
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 			);
@@ -184,9 +184,9 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
-				ZDB00001000000000000009A /* GoogleService-Info.plist */,
-				ZDB0000100000000000000AA /* Runner.entitlements */,
-				ZDB0000100000000000000CA /* PrivacyInfo.xcprivacy */,
+				A7E3C8F4B2D9165A7E4C8F3B /* GoogleService-Info.plist */,
+				8D2F7B4C9E1A365D8C2F4B7E /* Runner.entitlements */,
+				1C9E4F8B2D7A365C1E9F4B8D /* PrivacyInfo.xcprivacy */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -218,11 +218,11 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		ZDB000010000000000000DA /* NotificationService */ = {
+		C5A8E4F2B9D7163E8A5C4F1B /* NotificationService */ = {
 			isa = PBXGroup;
 			children = (
-				ZDB00001000000000000006A /* NotificationService.swift */,
-				ZDB00001000000000000007A /* Info.plist */,
+				F3B9E2C6D8A4175E3C8B6F9A /* NotificationService.swift */,
+				F2B8D4C9E7A3165F8B4C2D9E /* Info.plist */,
 			);
 			path = NotificationService;
 			sourceTree = "<group>";
@@ -259,28 +259,29 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
-				ZDB000010000000000000FA /* Embed App Extensions */,
+				6A3C9F2E8B4D175C3A7F9E1B /* Embed App Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				9C6F963722BDC84A699870C9 /* [CP] Embed Pods Frameworks */,
+				FB9615AE5EFC80DDCD33C3BB /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				ZDB000010000000000000EA /* PBXTargetDependency */,
+				7D3A8C4F2E9B165D7A3C8F4E /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
 		};
-		ZDB00001000000000000005A /* NotificationService */ = {
+		A2C8F4E9B7D3165C4A9E8F2D /* NotificationService */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = ZDB000010000000000000CA /* Build configuration list for PBXNativeTarget "NotificationService" */;
+			buildConfigurationList = 9E7F3B2C6A1D84E5C3F9B7D2 /* Build configuration list for PBXNativeTarget "NotificationService" */;
 			buildPhases = (
 				0FCF65CB5FC791847C8BBCF9 /* [CP] Check Pods Manifest.lock */,
-				ZDB000010000000000000CB /* Sources */,
-				ZDB000010000000000000BB /* Frameworks */,
-				ZDB000010000000000000CC /* Resources */,
+				B6F3C9E4A2D817B6F3C5E9A2 /* Sources */,
+				4B8F2C7E9D1A365B4F8C2E7D /* Frameworks */,
+				D5A8E2C7F4B9165D5A8F2C7E /* Resources */,
 			);
 			buildRules = (
 			);
@@ -288,7 +289,7 @@
 			);
 			name = NotificationService;
 			productName = NotificationService;
-			productReference = ZDB00001000000000000008A /* NotificationService.appex */;
+			productReference = D4F1C7B8E9A326F5C2D8B4E7 /* NotificationService.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -309,7 +310,7 @@
 						CreatedOnToolsVersion = 7.3.1;
 						LastSwiftMigration = 1100;
 					};
-					ZDB00001000000000000005A = {
+					A2C8F4E9B7D3165C4A9E8F2D = {
 						CreatedOnToolsVersion = 14.0;
 					};
 				};
@@ -329,7 +330,7 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
-				ZDB00001000000000000005A /* NotificationService */,
+				A2C8F4E9B7D3165C4A9E8F2D /* NotificationService */,
 			);
 		};
 /* End PBXProject section */
@@ -346,8 +347,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ZDB00001000000000000003A /* GoogleService-Info.plist in Resources */,
-				ZDB0000100000000000000BA /* PrivacyInfo.xcprivacy in Resources */,
+				E9F4C2B7A8D1365C4F9E7B3A /* GoogleService-Info.plist in Resources */,
+				3B7A9F4C2E8D165A7C3F9B4E /* PrivacyInfo.xcprivacy in Resources */,
 				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
@@ -355,7 +356,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		ZDB000010000000000000CC /* Resources */ = {
+		D5A8E2C7F4B9165D5A8F2C7E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -446,11 +447,9 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -479,6 +478,21 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		FB9615AE5EFC80DDCD33C3BB /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -500,11 +514,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		ZDB000010000000000000CB /* Sources */ = {
+		B6F3C9E4A2D817B6F3C5E9A2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ZDB00001000000000000001A /* NotificationService.swift in Sources */,
+				7E4B2F9C1A6D3E8B5F7C2A9D /* NotificationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,10 +530,10 @@
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
 		};
-		ZDB000010000000000000EA /* PBXTargetDependency */ = {
+		7D3A8C4F2E9B165D7A3C8F4E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = ZDB00001000000000000005A /* NotificationService */;
-			targetProxy = ZDB00001000000000000004A /* PBXContainerItemProxy */;
+			target = A2C8F4E9B7D3165C4A9E8F2D /* NotificationService */;
+			targetProxy = C4E8B2F7A9D3165B4C7E9F2A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -826,7 +840,7 @@
 			};
 			name = Release;
 		};
-		ZDB000010000000000000CB1 /* Debug */ = {
+		2E8A4F9C7B3D165E2A8F4C9B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C626ED23984266B5EEC0E7A5 /* Pods-NotificationService.debug.xcconfig */;
 			buildSettings = {
@@ -845,7 +859,7 @@
 			};
 			name = Debug;
 		};
-		ZDB000010000000000000CB2 /* Release */ = {
+		5F3C8A2E9B4D167F3C5A8E2D /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 20374AF33964B5DFE9964AC0 /* Pods-NotificationService.release.xcconfig */;
 			buildSettings = {
@@ -864,7 +878,7 @@
 			};
 			name = Release;
 		};
-		ZDB000010000000000000CB3 /* Profile */ = {
+		9A4E7C3F2B8D165A9E4C7F3B /* Profile */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 572BB00E6789889EAABF954F /* Pods-NotificationService.profile.xcconfig */;
 			buildSettings = {
@@ -916,12 +930,12 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		ZDB000010000000000000CA /* Build configuration list for PBXNativeTarget "NotificationService" */ = {
+		9E7F3B2C6A1D84E5C3F9B7D2 /* Build configuration list for PBXNativeTarget "NotificationService" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				ZDB000010000000000000CB1 /* Debug */,
-				ZDB000010000000000000CB2 /* Release */,
-				ZDB000010000000000000CB3 /* Profile */,
+				2E8A4F9C7B3D165E2A8F4C9B /* Debug */,
+				5F3C8A2E9B4D167F3C5A8E2D /* Release */,
+				9A4E7C3F2B8D165A9E4C7F3B /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

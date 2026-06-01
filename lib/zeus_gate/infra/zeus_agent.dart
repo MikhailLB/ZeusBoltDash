@@ -17,8 +17,8 @@ String _iosUa(String ver) {
 }
 
 String _fallback() => Platform.isAndroid
-    ? _androidUa(sdk: 14, brand: 'Xiaomi', model: 'M2101K7AG', build: 'UP1A.231005.007')
-    : _iosUa('17.4.1');
+    ? _androidUa(sdk: 34, brand: 'samsung', model: 'SM-S916B', build: 'UP1A.231005.007')
+    : _iosUa('18.3.2');
 
 class ZeusAgent extends http.BaseClient {
   final http.Client _inner = http.Client();

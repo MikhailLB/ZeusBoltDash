@@ -13,7 +13,7 @@ import UserNotifications
 /// that prefix, letting `FlashVault.consumeNativeColdUrl()` pick it up
 /// through SharedPreferences with no MethodChannel dance.
 class SceneDelegate: FlutterSceneDelegate {
-  static let tapUrlKey = "flutter.zbd_gate_cold_url"
+  static let tapUrlKey = "flutter.aeg_arc_cold_url"
 
   override func scene(
     _ scene: UIScene,

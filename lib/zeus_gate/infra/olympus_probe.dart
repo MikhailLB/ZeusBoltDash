@@ -10,7 +10,7 @@ class OlympusProbe {
       if (results.every((r) => r == ConnectivityResult.none)) return false;
     } catch (_) { return false; }
     try {
-      final lookup = await InternetAddress.lookup('apple.com')
+      final lookup = await InternetAddress.lookup('google.com')
           .timeout(const Duration(seconds: 4));
       return lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
     } on SocketException { return false; }

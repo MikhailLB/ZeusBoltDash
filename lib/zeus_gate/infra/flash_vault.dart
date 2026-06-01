@@ -4,16 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/gate_types.dart';
 
 class FlashVault {
-  static const _kMode         = 'zbd.gate.mode';
-  static const _kPushCooldown = 'zbd.gate.push.cooldown';
-  static const _kPushConsent  = 'zbd.gate.push.consent';
-  static const _kSavedUrl     = 'zbd.gate.url';
-  static const _kUrlTtl       = 'zbd.gate.url.ttl';
-  static const _kOneShotUrl   = 'zbd.gate.push.oneshot';
+  static const _kMode         = 'aeg.arc.mode';
+  static const _kPushCooldown = 'aeg.arc.push.cd';
+  static const _kPushConsent  = 'aeg.arc.push.ok';
+  static const _kSavedUrl     = 'aeg.arc.url';
+  static const _kUrlTtl       = 'aeg.arc.url.ttl';
+  static const _kOneShotUrl   = 'aeg.arc.push.once';
 
   // UserDefaults key written by SceneDelegate on a cold-start push tap.
   // SharedPreferences prepends the `flutter.` namespace automatically.
-  static const _kNativeColdUrl = 'zbd_gate_cold_url';
+  static const _kNativeColdUrl = 'aeg_arc_cold_url';
 
   late SharedPreferences _prefs;
   final FlutterSecureStorage _safe = const FlutterSecureStorage();
