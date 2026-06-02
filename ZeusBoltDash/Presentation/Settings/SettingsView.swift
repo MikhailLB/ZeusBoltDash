@@ -37,7 +37,7 @@ struct SettingsView: View {
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
         .onAppear { hapticsOn = store.profile.hapticsEnabled }
-        .onChange(of: hapticsOn) { _, val in
+        .onChange(of: hapticsOn) { val in
             store.profile.hapticsEnabled = val
             HapticsManager.enabled = val
             store.save()
