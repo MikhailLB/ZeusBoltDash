@@ -2,22 +2,20 @@ import SwiftUI
 
 struct SanctuaryView: View {
     @EnvironmentObject private var store: ProfileStore
-    @State private var route: Route? = nil
-    @State private var showCodex = false
+    @State private var path: [Route] = []
 
-    enum Route: Hashable, Identifiable {
+    enum Route: Hashable {
         case arena, pantheon, trials, settings, codex
-        var id: Self { self }
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 SkyBackdrop()
                 content
             }
             .ignoresSafeArea()
-            .navigationDestination(item: $route) { r in
+            .navigationDestination(for: Route.self) { r in
                 switch r {
                 case .arena:
                     let deity = DeityCatalog.deity(id: store.profile.selectedDeityID)
@@ -121,19 +119,19 @@ struct SanctuaryView: View {
 
     private var actions: some View {
         VStack(spacing: 12) {
-            AegisButton(title: "ENTER ARENA") { route = .arena }
+            AegisButton(title: "ENTER ARENA") { path.append(.arena) }
             HStack(spacing: 12) {
-                AegisButton(title: "PANTHEON", style: .secondary) { route = .pantheon }
-                AegisButton(title: "TRIALS", style: .secondary) { route = .trials }
+                AegisButton(title: "PANTHEON", style: .secondary) { path.append(.pantheon) }
+                AegisButton(title: "TRIALS", style: .secondary) { path.append(.trials) }
             }
         }
     }
 
     private var bottomNav: some View {
         HStack {
-            iconButton(icon: "book.fill", label: "Codex") { route = .codex }
+            iconButton(icon: "book.fill", label: "Codex") { path.append(.codex) }
             Spacer()
-            iconButton(icon: "gearshape.fill", label: "Settings") { route = .settings }
+            iconButton(icon: "gearshape.fill", label: "Settings") { path.append(.settings) }
         }
         .padding(.top, 12)
     }
