@@ -41,6 +41,7 @@ final class ArenaWorld: ObservableObject {
     let deity: Deity
     let arenaRadius: Double
     let coreRadius: Double
+    let parryRadius: Double
     let parryWindow: Double
     let maxGuard: Int
     let isTutorial: Bool
@@ -68,10 +69,12 @@ final class ArenaWorld: ObservableObject {
     var essenceEarned: Int { score / 12 }
 
     init(deity: Deity, parryWindow: Double, maxGuard: Int, wrathPerParry: Double,
-         arenaRadius: Double, isTutorial: Bool = false) {
+         arenaRadius: Double, coreRadius: Double, parryRadius: Double,
+         isTutorial: Bool = false) {
         self.deity = deity
         self.arenaRadius = arenaRadius
-        self.coreRadius = arenaRadius * 0.14
+        self.coreRadius = coreRadius
+        self.parryRadius = parryRadius
         // A forgiving window while learning, like the Flutter tutorial.
         self.parryWindow = isTutorial ? 0.40 : parryWindow
         self.maxGuard = isTutorial ? 99 : maxGuard

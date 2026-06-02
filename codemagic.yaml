@@ -1,0 +1,44 @@
+workflows:
+  ios-release:
+    name: iOS App Store Release
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: CodemagicKey
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.olympus.zeus.bolt.dash
+      vars:
+        XCODE_SCHEME: "ZeusBoltDash"
+        XCODE_PROJECT: "ZeusBoltDash.xcodeproj"
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Set build number
+        script: |
+          agvtool new-version -all "$BUILD_NUMBER"
+
+      - name: Build IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

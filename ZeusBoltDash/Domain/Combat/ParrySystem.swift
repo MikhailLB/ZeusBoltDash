@@ -10,10 +10,13 @@ struct ParryOutcome {
 }
 
 enum ParrySystem {
-    static let angleTolerance = Double.pi / 5.0
+    /// Angular tolerance (radians) between the swipe and the threat bearing (~35°).
+    static let angleTolerance = 0.62
+    /// Extra reach (seconds) ahead of the timing window so early swipes connect.
+    static let reachAhead = 0.55
 
     static func swipeAngle(from delta: Vec2) -> Double? {
-        guard delta.magnitude > 8 else { return nil }
+        guard delta.magnitude > 16 else { return nil }
         return atan2(delta.y, delta.x)
     }
 
@@ -30,8 +33,9 @@ enum ParrySystem {
         for t in threats where !t.isRepelled && !t.isPickup {
             let diff = angleDiff(swipeAngle, t.bearing)
             guard diff <= angleTolerance else { continue }
-            let ttc = t.timeToCore
-            guard ttc > 0 && ttc <= parryWindow else { continue }
+            // Time for the threat to reach the deity at the core.
+            let ttc = t.speed > 0 ? (t.radius - coreRadius) / t.speed : .infinity
+            guard ttc <= parryWindow + reachAhead else { continue }
             if ttc < bestTime { bestTime = ttc; best = t }
         }
 

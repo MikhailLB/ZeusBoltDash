@@ -26,13 +26,19 @@ struct ArenaView: View {
         self.onTutorialDone = onTutorialDone
         self.onExit = onExit
         let screen = UIScreen.main.bounds
-        let radius = Double(min(screen.width, screen.height) * 0.44)
+        let w = Double(screen.width), h = Double(screen.height)
+        let shortest = min(w, h)
+        // Mirror the Flutter geometry: threats glide in from beyond the corners,
+        // land at the core where the deity stands, with a visible parry ring.
+        let spawn = (w * w + h * h).squareRoot() / 2 + 40
         _world = StateObject(wrappedValue: ArenaWorld(
             deity: deity,
             parryWindow: profile.parryWindow,
             maxGuard: profile.guardCapacity,
             wrathPerParry: profile.wrathPerParry,
-            arenaRadius: radius,
+            arenaRadius: spawn,
+            coreRadius: shortest * 0.15,
+            parryRadius: shortest * 0.33,
             isTutorial: isTutorial
         ))
     }
@@ -42,11 +48,10 @@ struct ArenaView: View {
             background
 
             GeometryReader { geo in
-                let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-                let aRadius = min(geo.size.width, geo.size.height) * 0.44
+                let center = CGPoint(x: geo.size.width / 2, y: geo.size.height * 0.47)
 
                 ZStack {
-                    arenaCanvas(center: center, radius: aRadius)
+                    arenaCanvas(center: center)
                     deitySprite(center: center)
                     ArenaHUD(world: world) { world.pause() }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -132,14 +137,17 @@ struct ArenaView: View {
         }
     }
 
-    private func arenaCanvas(center: CGPoint, radius: CGFloat) -> some View {
-        Canvas { ctx, size in
-            drawGuardRing(ctx: ctx, center: center, radius: radius)
-            drawThreats(ctx: ctx, center: center)
-            drawParryFlashes(ctx: ctx, center: center)
-            drawFloatTexts(ctx: ctx, center: center)
-            if world.ultActive && world.ultKind == .flameRing {
-                drawFlameRing(ctx: ctx, center: center, radius: radius)
+    private func arenaCanvas(center: CGPoint) -> some View {
+        TimelineView(.animation) { timeline in
+            Canvas { ctx, size in
+                let t = timeline.date.timeIntervalSinceReferenceDate
+                drawGuardRing(ctx: ctx, center: center, time: t)
+                drawThreats(ctx: ctx, center: center)
+                drawParryFlashes(ctx: ctx, center: center)
+                drawFloatTexts(ctx: ctx, center: center)
+                if world.ultActive && world.ultKind == .flameRing {
+                    drawFlameRing(ctx: ctx, center: center)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -147,51 +155,85 @@ struct ArenaView: View {
     }
 
     private func deitySprite(center: CGPoint) -> some View {
-        Group {
+        let size = world.coreRadius * 2.6
+        return Group {
             if let img = sprites[deity.heroSprite] {
                 Image(uiImage: img)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .position(center)
+                    .frame(width: size, height: size * 1.3)
+                    .position(x: center.x, y: center.y - size * 0.13)
             } else {
                 Circle()
                     .fill(deity.accent)
-                    .frame(width: 64, height: 64)
+                    .frame(width: size, height: size)
                     .position(center)
             }
         }
     }
 
     // MARK: - Canvas drawing
-    private func drawGuardRing(ctx: GraphicsContext, center: CGPoint, radius: CGFloat) {
-        let coreR = radius * 0.14
-        var path = Path()
-        path.addEllipse(in: CGRect(x: center.x - coreR, y: center.y - coreR,
-                                   width: coreR * 2, height: coreR * 2))
-        let guardFraction = Double(world.guard_) / Double(world.maxGuard)
-        let ringColor = AegisPalette.guardRing.opacity(0.25 + 0.25 * guardFraction)
-        ctx.stroke(path, with: .color(ringColor), lineWidth: 3)
+    private func drawGuardRing(ctx: GraphicsContext, center: CGPoint, time: Double) {
+        let acc = deity.accent
+        let parryR = world.parryRadius
+        let pulse = 0.5 + 0.5 * sin(time.truncatingRemainder(dividingBy: 2) * .pi)
 
-        let outerR = radius * 0.22
-        var outerPath = Path()
-        outerPath.addEllipse(in: CGRect(x: center.x - outerR, y: center.y - outerR,
-                                        width: outerR * 2, height: outerR * 2))
-        ctx.stroke(outerPath, with: .color(AegisPalette.guardRing.opacity(0.12)), lineWidth: 1)
+        // Soft core aura where the deity stands.
+        let auraR = world.coreRadius * 2.4
+        let aura = Path(ellipseIn: CGRect(x: center.x - auraR, y: center.y - auraR,
+                                          width: auraR * 2, height: auraR * 2))
+        ctx.fill(aura, with: .radialGradient(
+            Gradient(colors: [acc.opacity(0), acc.opacity(0.16 + pulse * 0.10), acc.opacity(0)]),
+            center: center, startRadius: auraR * 0.55, endRadius: auraR))
+
+        // The pulsing parry guide ring.
+        let ringRect = CGRect(x: center.x - parryR, y: center.y - parryR,
+                              width: parryR * 2, height: parryR * 2)
+        ctx.stroke(Path(ellipseIn: ringRect),
+                   with: .color(acc.opacity(0.35 + pulse * 0.25)), lineWidth: 2.4)
+
+        // Temple-dial tick marks around the ring.
+        for i in 0..<12 {
+            let a = Double(i) / 12 * .pi * 2
+            let p1 = CGPoint(x: center.x + cos(a) * (parryR - 6), y: center.y + sin(a) * (parryR - 6))
+            let p2 = CGPoint(x: center.x + cos(a) * (parryR + 6), y: center.y + sin(a) * (parryR + 6))
+            var tick = Path()
+            tick.move(to: p1); tick.addLine(to: p2)
+            ctx.stroke(tick, with: .color(AegisPalette.gold.opacity(0.3)), lineWidth: 2)
+        }
+    }
+
+    private func threatSize(_ t: Threat) -> CGFloat {
+        switch t.kind {
+        case .titan:                 return world.coreRadius * 1.9
+        case .boulder:               return world.coreRadius * 1.15
+        case .darkBolt, .shade:      return world.coreRadius * 0.9
+        case .blessing, .essenceMote: return world.coreRadius * 0.8
+        }
     }
 
     private func drawThreats(ctx: GraphicsContext, center: CGPoint) {
         for t in world.threats {
             let pos = CGPoint(x: center.x + t.position.x, y: center.y + t.position.y)
-            let size: CGFloat = t.kind == .titan ? 44 : 28
+            let size = threatSize(t)
+
+            if t.isPickup {
+                // Glowing gift orb.
+                let color = t.kind == .blessing ? AegisPalette.blessing : AegisPalette.goldBright
+                let glowR = size * 0.85
+                let glow = Path(ellipseIn: CGRect(x: pos.x - glowR, y: pos.y - glowR,
+                                                  width: glowR * 2, height: glowR * 2))
+                ctx.fill(glow, with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.55), color.opacity(0)]),
+                    center: pos, startRadius: 0, endRadius: glowR))
+            }
 
             if let img = sprites[t.sprite] {
                 let rect = CGRect(x: pos.x - size / 2, y: pos.y - size / 2, width: size, height: size)
                 ctx.draw(Image(uiImage: img), in: rect)
             } else {
-                var path = Path()
-                path.addEllipse(in: CGRect(x: pos.x - size / 2, y: pos.y - size / 2,
-                                           width: size, height: size))
+                let path = Path(ellipseIn: CGRect(x: pos.x - size / 2, y: pos.y - size / 2,
+                                                  width: size, height: size))
                 let color: Color = t.isPickup ? AegisPalette.essence :
                                    t.kind == .titan ? AegisPalette.wrath : AegisPalette.divine
                 ctx.fill(path, with: .color(color))
@@ -219,12 +261,12 @@ struct ArenaView: View {
         }
     }
 
-    private func drawFlameRing(ctx: GraphicsContext, center: CGPoint, radius: CGFloat) {
-        let r = radius * 0.22 * 2.8
-        var path = Path()
-        path.addEllipse(in: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2))
-        ctx.stroke(path, with: .color(AegisPalette.wrath.opacity(0.7)), lineWidth: 4)
-        ctx.fill(path, with: .color(AegisPalette.wrath.opacity(0.08)))
+    private func drawFlameRing(ctx: GraphicsContext, center: CGPoint) {
+        let r = world.parryRadius + 8
+        let path = Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2))
+        ctx.stroke(path, with: .color(AegisPalette.emberOrange.opacity(0.8)), lineWidth: 6)
+        ctx.fill(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
+                 with: .color(AegisPalette.emberOrange.opacity(0.06)))
     }
 
     // MARK: - Gestures
