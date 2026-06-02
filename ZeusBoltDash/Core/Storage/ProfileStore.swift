@@ -89,6 +89,15 @@ final class ProfileStore: ObservableObject {
             if bestStreak > $0.bestParryStreak { $0.bestParryStreak = bestStreak }
             $0.titansFelled += titansFelled
             $0.ultimatesUnleashed += ultimates
+
+            // Lifetime / collection trials.
+            if $0.titansFelled >= 25 && !$0.earnedTrials.contains("titan_slayer") {
+                $0.earnedTrials.append("titan_slayer")
+            }
+            if $0.unlockedDeities.count >= DeityCatalog.all.count &&
+                !$0.earnedTrials.contains("pantheon") {
+                $0.earnedTrials.append("pantheon")
+            }
         }
     }
 }

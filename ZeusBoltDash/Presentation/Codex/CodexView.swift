@@ -3,7 +3,16 @@ import SwiftUI
 /// The Codex — a short, swipeable rulebook. Ported from the Flutter
 /// `CodexScreen` (menu mode; the final page returns to the caller).
 struct CodexView: View {
+    @EnvironmentObject private var store: ProfileStore
     @Environment(\.dismiss) private var dismiss
+
+    /// First app launch: the final page starts the tutorial instead of dismissing.
+    var firstRun = false
+    /// Called on the final page when `firstRun` (leads into the tutorial).
+    var onFinish: (() -> Void)?
+    /// Called when closed early during `firstRun` (skip straight to Sanctuary).
+    var onSkip: (() -> Void)?
+
     @State private var index = 0
 
     private struct Page: Identifiable {
@@ -36,7 +45,7 @@ struct CodexView: View {
             SkyBackdrop(accent: AegisPalette.skyBlue)
             VStack(spacing: 0) {
                 HStack {
-                    Button { dismiss() } label: {
+                    Button { close() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(AegisPalette.goldBright)
@@ -56,7 +65,7 @@ struct CodexView: View {
                             sigil: isLast ? "⚔" : "→",
                             width: 320) {
                     if isLast {
-                        dismiss()
+                        finish()
                     } else {
                         withAnimation(.easeOut(duration: 0.28)) { index += 1 }
                     }
@@ -66,6 +75,19 @@ struct CodexView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            if firstRun, !store.profile.seenCodex {
+                store.mutate { $0.seenCodex = true }
+            }
+        }
+    }
+
+    private func finish() {
+        if firstRun { onFinish?() } else { dismiss() }
+    }
+
+    private func close() {
+        if firstRun { onSkip?() } else { dismiss() }
     }
 
     private func pageView(_ p: Page) -> some View {

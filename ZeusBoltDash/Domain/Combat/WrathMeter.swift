@@ -25,4 +25,8 @@ final class WrathMeter {
     func consume() {
         value = 0
     }
+
+    func reset() {
+        value = 0
+    }
 }

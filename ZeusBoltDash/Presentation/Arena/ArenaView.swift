@@ -7,17 +7,24 @@ struct ArenaView: View {
 
     let deity: Deity
     let isTutorial: Bool
+    /// Called when the scripted tutorial completes (first-launch flow).
+    var onTutorialDone: (() -> Void)?
+    /// Called when leaving the arena to the Sanctuary; defaults to `dismiss`.
+    var onExit: (() -> Void)?
 
     @StateObject private var world: ArenaWorld
     @State private var sprites: [String: UIImage] = [:]
     @State private var swipeStart: CGPoint = .zero
-    @State private var showResult = false
+    @State private var committed = false
 
     private let loop = GameLoop()
 
-    init(deity: Deity, profile: Profile, isTutorial: Bool = false) {
+    init(deity: Deity, profile: Profile, isTutorial: Bool = false,
+         onTutorialDone: (() -> Void)? = nil, onExit: (() -> Void)? = nil) {
         self.deity = deity
         self.isTutorial = isTutorial
+        self.onTutorialDone = onTutorialDone
+        self.onExit = onExit
         let screen = UIScreen.main.bounds
         let radius = Double(min(screen.width, screen.height) * 0.44)
         _world = StateObject(wrappedValue: ArenaWorld(
@@ -41,32 +48,74 @@ struct ArenaView: View {
                 ZStack {
                     arenaCanvas(center: center, radius: aRadius)
                     deitySprite(center: center)
-                    ArenaHUD(world: world)
+                    ArenaHUD(world: world) { world.pause() }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
                 .gesture(dragGesture)
-                .onTapGesture { world.activateUltimate() }
                 .onAppear {
                     loadSprites()
                     startLoop()
                 }
             }
 
-            if world.isOver && !showResult {
-                Color.clear.onAppear {
-                    loop.stop()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { showResult = true }
-                }
+            if world.isPaused && !world.isOver {
+                pauseOverlay
+            }
+
+            if world.tutorialFinished {
+                TutorialDoneOverlay(accent: deity.accent) { onTutorialDone?() }
+            } else if world.isOver {
+                GameOverOverlay(world: world,
+                                isBest: world.score >= store.profile.highScore && world.score > 0,
+                                onRetry: restart, onQuit: quit)
             }
         }
         .ignoresSafeArea()
         .statusBar(hidden: true)
-        .sheet(isPresented: $showResult, onDismiss: handleDismiss) {
-            ResultView(score: world.score, wave: world.wave) {
-                showResult = false
-            }
+        .onChange(of: world.isOver) { over in
+            if over { commitRun() }
+        }
+        .onChange(of: world.tutorialFinished) { done in
+            if done { loop.stop() }
         }
         .onDisappear { loop.stop() }
+    }
+
+    private func commitRun() {
+        loop.stop()
+        guard !committed, !isTutorial else { return }
+        committed = true
+        world.commitRun(to: store)
+    }
+
+    private func restart() {
+        committed = false
+        world.reset()
+        loop.start()
+    }
+
+    private func quit() {
+        loop.stop()
+        if let onExit { onExit() } else { dismiss() }
+    }
+
+    // MARK: - Pause overlay
+    private var pauseOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.72).ignoresSafeArea()
+            VStack(spacing: 22) {
+                Text("PAUSED")
+                    .font(AppFonts.title(30)).tracking(3)
+                    .foregroundColor(AegisPalette.gold)
+                    .goldGlow()
+                AegisButton(label: "RESUME", sigil: "▶", width: 260) { world.resume() }
+                AegisButton(label: "SANCTUARY", sigil: "🏛", accent: AegisPalette.underViolet, width: 260) {
+                    world.resume()
+                    quit()
+                }
+            }
+            .padding(32)
+        }
     }
 
     // MARK: - Subviews
@@ -212,50 +261,87 @@ struct ArenaView: View {
         }
     }
 
-    private func handleDismiss() {
-        let stats = world.sessionStats
-        store.recordRun(score: world.score, wave: stats.wave,
-                        threatsRepelled: stats.parries, perfectParries: stats.perfect,
-                        bestStreak: stats.bestStreak, titansFelled: stats.titans,
-                        ultimates: stats.ults)
-        dismiss()
-    }
 }
 
-// MARK: - Result overlay
-private struct ResultView: View {
-    let score: Int
-    let wave: Int
-    let onClose: () -> Void
+// MARK: - Game over overlay
+private struct GameOverOverlay: View {
+    @ObservedObject var world: ArenaWorld
+    let isBest: Bool
+    let onRetry: () -> Void
+    let onQuit: () -> Void
+
+    @State private var scale: CGFloat = 0.85
 
     var body: some View {
         ZStack {
-            AegisPalette.background.ignoresSafeArea()
-            VStack(spacing: 24) {
-                Text("GAME OVER")
-                    .font(AppFonts.title(32))
-                    .foregroundStyle(AegisPalette.gold)
-                VStack(spacing: 8) {
-                    statRow(label: "Score", value: "\(score)")
-                    statRow(label: "Wave", value: "\(wave)")
-                    statRow(label: "Essence earned", value: "+\(score / 12)")
+            Color.black.opacity(0.8).ignoresSafeArea()
+            VStack(spacing: 0) {
+                Text("THE SIEGE ENDS")
+                    .font(AppFonts.title(22)).goldGlow()
+                    .foregroundColor(AegisPalette.goldBright)
+                Spacer().frame(height: 16)
+                statRow("SCORE", "\(world.score)")
+                statRow("WAVE REACHED", "\(world.sessionStats.wave)")
+                statRow("BEST STREAK", "\(world.sessionStats.bestStreak)")
+                statRow("PERFECT PARRIES", "\(world.sessionStats.perfect)")
+                statRow("ESSENCE EARNED", "+\(world.essenceEarned)")
+                if isBest {
+                    Spacer().frame(height: 10)
+                    Text("★ NEW BEST ★")
+                        .font(AppFonts.title(16)).foregroundColor(AegisPalette.goldBright)
                 }
-                .padding()
-                .background(AegisPalette.panel)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-
-                AegisButton(label: "RETURN", sigil: "⚔") { onClose() }
+                Spacer().frame(height: 20)
+                AegisButton(label: "FIGHT AGAIN", sigil: "⚔", accent: world.deity.accent, width: 260, action: onRetry)
+                Spacer().frame(height: 12)
+                AegisButton(label: "SANCTUARY", sigil: "🏛", accent: AegisPalette.underViolet, width: 260, action: onQuit)
             }
-            .padding(32)
+            .padding(22)
+            .frame(width: 320)
+            .background(
+                RoundedRectangle(cornerRadius: 20).fill(
+                    LinearGradient(colors: [AegisPalette.duskPurple, AegisPalette.voidNight],
+                                   startPoint: .top, endPoint: .bottom))
+            )
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(AegisPalette.gold.opacity(0.7), lineWidth: 1.5))
+            .scaleEffect(scale)
+            .onAppear { withAnimation(.spring(response: 0.32, dampingFraction: 0.6)) { scale = 1 } }
         }
-        .preferredColorScheme(.dark)
     }
 
-    private func statRow(label: String, value: String) -> some View {
+    private func statRow(_ label: String, _ value: String) -> some View {
         HStack {
-            Text(label).font(AppFonts.body()).foregroundStyle(AegisPalette.textMuted)
+            Text(label).font(AppFonts.label(13)).foregroundColor(AegisPalette.parchmentDim)
             Spacer()
-            Text(value).font(AppFonts.heading()).foregroundStyle(AegisPalette.text)
+            Text(value).font(AppFonts.readout(16)).foregroundColor(AegisPalette.goldBright)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Tutorial complete overlay
+private struct TutorialDoneOverlay: View {
+    let accent: Color
+    let onStart: () -> Void
+
+    @State private var scale: CGFloat = 0.85
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.8).ignoresSafeArea()
+            VStack(spacing: 0) {
+                Text("✅").font(.system(size: 56))
+                Spacer().frame(height: 16)
+                Text("TRAINING COMPLETE")
+                    .font(AppFonts.title(24)).goldGlow()
+                    .foregroundColor(AegisPalette.goldBright)
+                Spacer().frame(height: 10)
+                Text("You are ready to defend Olympus!")
+                    .font(AppFonts.label(14)).foregroundColor(AegisPalette.parchment)
+                Spacer().frame(height: 28)
+                AegisButton(label: "START GAME", sigil: "⚔", accent: accent, width: 280, action: onStart)
+            }
+            .scaleEffect(scale)
+            .onAppear { withAnimation(.spring(response: 0.32, dampingFraction: 0.6)) { scale = 1 } }
         }
     }
 }

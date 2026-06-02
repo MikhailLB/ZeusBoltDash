@@ -2,50 +2,55 @@ import Foundation
 
 final class WaveDirector {
     private(set) var wave = 1
-    private(set) var isTitanWave = false
+    var isTitanWave: Bool { wave % 5 == 0 }
 
     private var quota = 0
     private var spawned = 0
-    private var elapsed = 0.0
-    private var interWaveDelay = 0.0
-    private var spawnInterval = 0.0
-    private var spawnClock = 0.0
+    private var sinceSpawn = 0.0
+    private var interWaveDelay = 1.2
     init() {}
 
+    private var waveQuota: Int { isTitanWave ? 2 + wave / 4 : 6 + Int(Double(wave) * 1.4) }
+    private var spawnInterval: Double { max(0.32, (isTitanWave ? 1.8 : 1.5) - Double(wave) * 0.072) }
+
+    func reset() {
+        wave = 1
+        spawned = 0
+        quota = 0
+        sinceSpawn = 0
+        interWaveDelay = 1.2
+    }
+
     func update(dt: Double, arenaRadius: Double, liveThreats: Int, spawn: (Threat) -> Void) {
+        if quota == 0 { quota = waveQuota }
+
         if interWaveDelay > 0 {
             interWaveDelay -= dt
-            if interWaveDelay <= 0 { startWave() }
             return
         }
 
         if spawned >= quota && liveThreats == 0 {
-            interWaveDelay = 2.2
             wave += 1
+            spawned = 0
+            quota = waveQuota
+            interWaveDelay = isTitanWave ? 1.6 : 1.0
             return
         }
 
-        if spawned < quota {
-            spawnClock -= dt
-            if spawnClock <= 0 {
-                spawnClock = spawnInterval
+        if spawned >= quota { return }
+
+        sinceSpawn += dt
+        if sinceSpawn >= spawnInterval {
+            sinceSpawn = 0
+            spawn(makeThreat(arenaRadius: arenaRadius))
+            spawned += 1
+
+            if !isTitanWave && wave >= 6 && spawned < quota &&
+                Double.random(in: 0...1) < 0.18 + Double(wave) * 0.012 {
                 spawn(makeThreat(arenaRadius: arenaRadius))
                 spawned += 1
-
-                if !isTitanWave && wave >= 6 && Double.random(in: 0...1) < 0.18 + Double(wave) * 0.012 {
-                    spawn(makeThreat(arenaRadius: arenaRadius))
-                    spawned += 1
-                }
             }
         }
-    }
-
-    private func startWave() {
-        isTitanWave = wave % 5 == 0
-        quota = isTitanWave ? 2 + wave / 5 : 4 + wave * 2
-        spawned = 0
-        spawnInterval = max(0.5, 2.0 - Double(wave) * 0.08)
-        spawnClock = 0.3
     }
 
     private func makeThreat(arenaRadius: Double) -> Threat {

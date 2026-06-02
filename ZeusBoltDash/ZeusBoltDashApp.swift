@@ -19,18 +19,41 @@ struct ZeusBoltDashApp: App {
 
 struct RootView: View {
     @EnvironmentObject private var store: ProfileStore
-    @State private var ready = false
+    @State private var stage: Stage = .boot
+
+    enum Stage { case boot, codex, tutorial, sanctuary }
+
+    private var deity: Deity { DeityCatalog.byId(store.profile.deity) }
 
     var body: some View {
         ZStack {
-            if ready {
-                SanctuaryView()
+            switch stage {
+            case .boot:
+                BootView { advanceFromBoot() }
                     .transition(.opacity)
-            } else {
-                BootView { withAnimation(.easeInOut(duration: 0.6)) { ready = true } }
+            case .codex:
+                CodexView(firstRun: true,
+                          onFinish: { go(.tutorial) },
+                          onSkip: { go(.sanctuary) })
+                    .transition(.opacity)
+            case .tutorial:
+                ArenaView(deity: deity, profile: store.profile, isTutorial: true,
+                          onTutorialDone: { go(.sanctuary) },
+                          onExit: { go(.sanctuary) })
+                    .transition(.opacity)
+            case .sanctuary:
+                SanctuaryView()
                     .transition(.opacity)
             }
         }
         .ignoresSafeArea()
+    }
+
+    private func advanceFromBoot() {
+        go(store.profile.seenCodex ? .sanctuary : .codex)
+    }
+
+    private func go(_ next: Stage) {
+        withAnimation(.easeInOut(duration: 0.5)) { stage = next }
     }
 }
