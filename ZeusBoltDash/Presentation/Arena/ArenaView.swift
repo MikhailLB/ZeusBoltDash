@@ -18,7 +18,6 @@ struct ArenaView: View {
     init(deity: Deity, relics: RelicLevels, isTutorial: Bool = false) {
         self.deity = deity
         self.isTutorial = isTutorial
-        self.relics = relics
         let screen = UIScreen.main.bounds
         let radius = Double(min(screen.width, screen.height) * 0.44)
         _world = StateObject(wrappedValue: ArenaWorld(
@@ -164,7 +163,7 @@ struct ArenaView: View {
             let pos = CGPoint(x: center.x + ft.position.x, y: center.y + ft.position.y)
             let text = Text(ft.text)
                 .font(AppFonts.caption(13))
-                .foregroundStyle(AegisPalette.gold.opacity(ft.opacity))
+                .foregroundColor(AegisPalette.gold.opacity(ft.opacity))
             ctx.draw(text, at: pos)
         }
     }
