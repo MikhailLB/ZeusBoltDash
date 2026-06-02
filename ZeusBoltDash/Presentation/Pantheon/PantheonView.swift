@@ -121,10 +121,7 @@ struct PantheonView: View {
 
     private func heroImage(_ deity: Deity) -> some View {
         Group {
-            if let url = Bundle.main.url(forResource: deity.heroSprite, withExtension: "webp",
-                                          subdirectory: "Resources/sprites/heroes"),
-               let data = try? Data(contentsOf: url),
-               let img = UIImage(data: data) {
+            if let img = Res.image(deity.heroSprite) {
                 Image(uiImage: img).resizable().scaledToFit().frame(width: 54, height: 54)
             } else {
                 Circle().fill(Color(hex: deity.accentColorHex).opacity(0.3)).frame(width: 54, height: 54)

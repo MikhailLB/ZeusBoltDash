@@ -51,7 +51,7 @@ struct SanctuaryView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                if let img = loadWebp("title_logo", sub: "Resources/branding") {
+                if let img = Res.image("title_logo") {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFit()
@@ -87,7 +87,7 @@ struct SanctuaryView: View {
     private var deityPreview: some View {
         let deity = DeityCatalog.deity(id: store.profile.selectedDeityID)
         return VStack(spacing: 12) {
-            if let img = loadWebp(deity.heroSprite, sub: "Resources/sprites/heroes") {
+            if let img = Res.image(deity.heroSprite) {
                 Image(uiImage: img)
                     .resizable()
                     .scaledToFit()
@@ -144,11 +144,5 @@ struct SanctuaryView: View {
             }
         }
         .buttonStyle(.plain)
-    }
-
-    private func loadWebp(_ name: String, sub: String) -> UIImage? {
-        guard let url = Bundle.main.url(forResource: name, withExtension: "webp", subdirectory: sub),
-              let data = try? Data(contentsOf: url) else { return nil }
-        return UIImage(data: data)
     }
 }

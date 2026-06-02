@@ -204,15 +204,8 @@ struct ArenaView: View {
             "essence_a", "essence_b"
         ]
         for name in names {
-            let subdirs = ["Resources/sprites/heroes", "Resources/sprites/arenas",
-                           "Resources/sprites/threats", "Resources/sprites/pickups"]
-            for sub in subdirs {
-                if let url = Bundle.main.url(forResource: name, withExtension: "webp", subdirectory: sub),
-                   let data = try? Data(contentsOf: url),
-                   let img = UIImage(data: data) {
-                    sprites[name] = img
-                    break
-                }
+            if let img = Res.image(name) {
+                sprites[name] = img
             }
         }
     }

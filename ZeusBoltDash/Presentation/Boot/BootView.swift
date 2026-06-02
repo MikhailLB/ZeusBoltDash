@@ -34,7 +34,7 @@ struct BootView: View {
 
     private var loadingBar: some View {
         Group {
-            if let img = loadWebp(barSprites[min(barPhase, barSprites.count - 1)], sub: "Resources/splash") {
+            if let img = Res.image(barSprites[min(barPhase, barSprites.count - 1)]) {
                 Image(uiImage: img)
                     .resizable()
                     .scaledToFit()
@@ -49,7 +49,6 @@ struct BootView: View {
     }
 
     private func startLoading() {
-        AppFonts.register()
         playVideo()
 
         var phase = 0
@@ -66,8 +65,7 @@ struct BootView: View {
     private func playVideo() {
         let isPortrait = UIScreen.main.bounds.height > UIScreen.main.bounds.width
         let name = isPortrait ? "intro_portrait" : "intro_landscape"
-        guard let url = Bundle.main.url(forResource: name, withExtension: "mp4",
-                                        subdirectory: "Resources/splash") else { return }
+        guard let url = Res.url(name, "mp4") else { return }
         let p = AVPlayer(url: url)
         p.actionAtItemEnd = .none
         NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime,
@@ -76,12 +74,6 @@ struct BootView: View {
         }
         p.play()
         player = p
-    }
-
-    private func loadWebp(_ name: String, sub: String) -> UIImage? {
-        guard let url = Bundle.main.url(forResource: name, withExtension: "webp", subdirectory: sub),
-              let data = try? Data(contentsOf: url) else { return nil }
-        return UIImage(data: data)
     }
 }
 

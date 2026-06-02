@@ -4,6 +4,10 @@ import SwiftUI
 struct ZeusBoltDashApp: App {
     @StateObject private var store = ProfileStore()
 
+    init() {
+        AppFonts.register()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
