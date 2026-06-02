@@ -1,23 +1,25 @@
 import Foundation
 
+/// A "Trial of the Gods" — the Olympus Aegis flavour of an achievement.
+/// Ported 1:1 from the Flutter `Trial` / `TrialCatalog`.
 struct Trial: Identifiable {
     let id: String
     let title: String
-    let description: String
-    let icon: String
-    let target: Int
-    let progressKey: String
+    let detail: String
+    let sigil: String
 }
 
-enum TrialsCatalog {
+enum TrialCatalog {
     static let all: [Trial] = [
-        Trial(id: "first_blood",  title: "First Blood",     description: "Complete your first run",           icon: "bolt.fill",         target: 1,    progressKey: "totalRuns"),
-        Trial(id: "veteran",      title: "Veteran",         description: "Complete 20 runs",                  icon: "star.fill",         target: 20,   progressKey: "totalRuns"),
-        Trial(id: "centurion",    title: "Centurion",       description: "Parry 100 threats",                 icon: "shield.fill",       target: 100,  progressKey: "totalParries"),
-        Trial(id: "perfect_eye",  title: "Perfect Eye",     description: "Land 50 perfect parries",           icon: "eye.fill",          target: 50,   progressKey: "totalPerfectParries"),
-        Trial(id: "wave_rider",   title: "Wave Rider",      description: "Survive 30 waves",                  icon: "water.waves",       target: 30,   progressKey: "totalWaves"),
-        Trial(id: "titan_slayer", title: "Titan Slayer",    description: "Survive 5 Titan waves",             icon: "flame.fill",        target: 5,    progressKey: "titanWaves"),
-        Trial(id: "score_1000",   title: "Olympian",        description: "Score 1000 in a single run",        icon: "trophy.fill",       target: 1000, progressKey: "highScore"),
-        Trial(id: "score_5000",   title: "Demigod",         description: "Score 5000 in a single run",        icon: "crown.fill",        target: 5000, progressKey: "highScore"),
+        Trial(id: "first_parry",  title: "First Aegis",  detail: "Parry your very first threat.",                   sigil: "🛡️"),
+        Trial(id: "perfect_10",   title: "Untouchable",  detail: "Land 10 perfect parries in a single trial.",      sigil: "✨"),
+        Trial(id: "streak_25",    title: "Unbroken",     detail: "Reach a parry streak of 25.",                     sigil: "🔗"),
+        Trial(id: "wave_10",      title: "Siege Breaker",detail: "Survive to wave 10.",                             sigil: "🌊"),
+        Trial(id: "wave_20",      title: "Olympian",     detail: "Survive to wave 20.",                             sigil: "🏛️"),
+        Trial(id: "titan_first",  title: "Titanfall",    detail: "Repel your first Titan.",                         sigil: "⛰️"),
+        Trial(id: "ult_first",    title: "Divine Wrath", detail: "Unleash an ultimate.",                            sigil: "⚡"),
+        Trial(id: "flawless_wave",title: "Flawless",     detail: "Clear a full wave without a guard break.",        sigil: "💠"),
+        Trial(id: "pantheon",     title: "Pantheon",     detail: "Unlock all four deities.",                        sigil: "👑"),
+        Trial(id: "titan_slayer", title: "Titan Slayer", detail: "Repel 25 Titans across all trials.",              sigil: "🗡️"),
     ]
 }

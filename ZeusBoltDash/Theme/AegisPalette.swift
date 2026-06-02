@@ -1,30 +1,48 @@
 import SwiftUI
 
+/// Central colour vocabulary for Olympus Aegis — ported 1:1 from the Flutter
+/// `AegisPalette`.
 enum AegisPalette {
-    static let background   = Color(hex: 0x0A0A1A)
-    static let surface      = Color(hex: 0x12122A)
-    static let panel        = Color(hex: 0x1A1A3A)
-    static let card         = Color(hex: 0x0F0F28)
-    static let cardBorder   = Color(hex: 0x2A2A5A)
+    // Base canvas
+    static let voidNight  = Color(hex: 0x0A0618)
+    static let deepPurple = Color(hex: 0x1B0E3A)
+    static let duskPurple = Color(hex: 0x2A1A55)
 
-    static let gold         = Color(hex: 0xF5C842)
-    static let goldDeep     = Color(hex: 0xC49A1A)
-    static let divine       = Color(hex: 0xA0C4FF)
-    static let lightning    = Color(hex: 0xFFE566)
-    static let wrath        = Color(hex: 0xFF6B35)
-    static let wrathDeep    = Color(hex: 0xCC4411)
-    static let essence      = Color(hex: 0x66FFAA)
+    // Divine gold
+    static let gold       = Color(hex: 0xE8B84B)
+    static let goldBright = Color(hex: 0xFFE27A)
+    static let goldDeep   = Color(hex: 0x8A6312)
 
-    static let danger       = Color(hex: 0xFF4444)
-    static let success      = Color(hex: 0x44FF88)
+    // Elemental accents (one per deity)
+    static let skyBlue     = Color(hex: 0x53C7FF) // Zeus
+    static let seaTeal     = Color(hex: 0x38E0C8) // Poseidon
+    static let underViolet = Color(hex: 0x9B5BFF) // Hades
+    static let emberOrange = Color(hex: 0xFF7A2E) // Prometheus
 
-    static let text         = Color(hex: 0xF0EDE0)
-    static let textMuted    = Color(hex: 0x8A8AA0)
-    static let textDark     = Color(hex: 0x0A0A1A)
+    // Threat / feedback
+    static let menace     = Color(hex: 0xB23A48)
+    static let menaceGlow = Color(hex: 0xFF5066)
+    static let blessing   = Color(hex: 0x7DE36B)
 
-    static let guardRing    = Color(hex: 0x4488FF)
-    static let parryFlash   = Color(hex: 0xFFFFAA)
-    static let perfectFlash = Color(hex: 0xFFD700)
+    // Text
+    static let parchment    = Color(hex: 0xF3E9D2)
+    static let parchmentDim = Color(hex: 0xB6A988)
+
+    // Links (legal row)
+    static let link = Color(hex: 0x7FB2E8)
+
+    // ── Semantic aliases used by the arena / HUD ─────────────────────────────
+    static let background   = voidNight
+    static let panel        = deepPurple
+    static let text         = parchment
+    static let textMuted    = parchmentDim
+    static let textDark     = voidNight
+    static let guardRing    = skyBlue
+    static let divine       = skyBlue       // generic threat fallback
+    static let essence      = blessing      // pickups
+    static let wrath        = emberOrange   // titan / flame VFX
+    static let perfectFlash = goldBright
+    static let parryFlash   = gold
 }
 
 extension Color {

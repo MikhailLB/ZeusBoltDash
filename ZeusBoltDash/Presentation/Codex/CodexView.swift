@@ -1,100 +1,103 @@
 import SwiftUI
 
+/// The Codex — a short, swipeable rulebook. Ported from the Flutter
+/// `CodexScreen` (menu mode; the final page returns to the caller).
 struct CodexView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var page = 0
+    @State private var index = 0
 
-    private let pages: [(title: String, body: String, icon: String)] = [
-        ("THE ARENA",
-         "A deity stands at the center of the arena. Threats converge from the outer ring, spiraling inward. Your sworn duty is to protect them.",
-         "shield.fill"),
-        ("HOW TO PARRY",
-         "Swipe toward an incoming threat to parry it. Time your swipe precisely — connect while the threat is still in the parry window to deflect it.",
-         "hand.draw.fill"),
-        ("PERFECT PARRY",
-         "Strike during the inner half of the parry window for a PERFECT PARRY. You earn double points and bonus wrath.",
-         "bolt.fill"),
-        ("BLESSINGS & MOTES",
-         "Golden blessings and essence motes drift toward the deity. Let them reach the core — do NOT parry them. They restore guard and grant essence.",
-         "sparkles"),
-        ("GUARD & GUARD LOSS",
-         "Each deity has 3 guard points. Threats that reach the core cost one guard. When guard reaches zero, the trial ends.",
-         "heart.fill"),
-        ("THE WRATH METER",
-         "Every parry fills the Wrath meter. When full, tap the screen to unleash your deity's ultimate power.",
-         "flame.fill"),
-        ("TITANS",
-         "Every 5th wave is a Titan wave. Titans have 3 HP and must be struck multiple times. Partial hits push them outward.",
-         "star.fill"),
-        ("RICOCHET",
-         "Repelled threats can collide with other hostiles, destroying them for bonus points. Chain ricochets for massive combos.",
-         "arrow.triangle.2.circlepath"),
+    private struct Page: Identifiable {
+        let id = UUID()
+        let sigil: String
+        let title: String
+        let body: String
+    }
+
+    private let pages: [Page] = [
+        Page(sigil: "🛡️", title: "YOU ARE THE GOD",
+             body: "You stand in the middle. Bad things fly at you from every side. Do not let them touch you!"),
+        Page(sigil: "👉", title: "SWIPE TO PUSH",
+             body: "Swipe your finger toward a bad thing. Your shield pushes it away. Easy!"),
+        Page(sigil: "✨", title: "WAIT, THEN SWIPE",
+             body: "Push right before it touches you to get a PERFECT. You earn lots more points!"),
+        Page(sigil: "💚", title: "GRAB THE GIFTS",
+             body: "Green and gold balls are gifts. Do NOT push them. Let them come to you!"),
+        Page(sigil: "⚡", title: "BIG BLAST",
+             body: "Every push fills your power bar. When it is full, tap it for a HUGE blast!"),
+        Page(sigil: "⛰️", title: "GIANT TITANS",
+             body: "Sometimes a huge Titan comes. Push it again and again until it goes away!"),
     ]
+
+    private var isLast: Bool { index == pages.count - 1 }
 
     var body: some View {
         ZStack {
-            SkyBackdrop()
+            AegisPalette.voidNight.ignoresSafeArea()
+            SkyBackdrop(accent: AegisPalette.skyBlue)
             VStack(spacing: 0) {
-                navBar
-                TabView(selection: $page) {
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(AegisPalette.goldBright)
+                            .frame(width: 44, height: 44)
+                    }
+                    Spacer()
+                }
+                TabView(selection: $index) {
                     ForEach(pages.indices, id: \.self) { i in
-                        pageCard(pages[i]).tag(i)
+                        pageView(pages[i]).tag(i)
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .frame(maxHeight: .infinity)
-
-                if page == pages.count - 1 {
-                    AegisButton(title: "UNDERSTOOD") { dismiss() }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 32)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                dots
+                Spacer().frame(height: 16)
+                AegisButton(label: isLast ? "ENTER ARENA" : "NEXT",
+                            sigil: isLast ? "⚔" : "→",
+                            width: 320) {
+                    if isLast {
+                        dismiss()
+                    } else {
+                        withAnimation(.easeOut(duration: 0.28)) { index += 1 }
+                    }
                 }
+                .padding(.horizontal, 24)
+                Spacer().frame(height: 22)
             }
         }
-        .ignoresSafeArea()
-        .preferredColorScheme(.dark)
+        .navigationBarHidden(true)
     }
 
-    private var navBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(AegisPalette.textMuted)
+    private func pageView(_ p: Page) -> some View {
+        VStack {
+            Spacer()
+            ZStack {
+                Circle()
+                    .fill(RadialGradient(colors: [AegisPalette.gold.opacity(0.3), .clear],
+                                         center: .center, startRadius: 0, endRadius: 60))
+                Circle().stroke(AegisPalette.gold.opacity(0.6), lineWidth: 1.5)
+                Text(p.sigil).font(.system(size: 56))
             }
+            .frame(width: 120, height: 120)
+            Spacer().frame(height: 28)
+            Text(p.title).font(AppFonts.title(24)).foregroundColor(AegisPalette.goldBright)
+                .goldGlow().multilineTextAlignment(.center)
+            Spacer().frame(height: 16)
+            Text(p.body).font(AppFonts.label(15)).foregroundColor(AegisPalette.parchment)
+                .multilineTextAlignment(.center).lineSpacing(4)
             Spacer()
-            Text("CODEX")
-                .font(AppFonts.heading(16))
-                .foregroundStyle(AegisPalette.gold)
-            Spacer()
-            Text("\(page + 1)/\(pages.count)")
-                .font(AppFonts.caption(12))
-                .foregroundStyle(AegisPalette.textMuted)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 16)
+        .padding(.horizontal, 30)
     }
 
-    private func pageCard(_ page: (title: String, body: String, icon: String)) -> some View {
-        VStack(spacing: 24) {
-            Spacer()
-            Image(systemName: page.icon)
-                .font(.system(size: 52))
-                .foregroundStyle(AegisPalette.gold)
-                .shadow(color: AegisPalette.gold.opacity(0.4), radius: 12)
-            Text(page.title)
-                .font(AppFonts.title(26))
-                .foregroundStyle(AegisPalette.gold)
-            Text(page.body)
-                .font(AppFonts.body(15))
-                .foregroundStyle(AegisPalette.text)
-                .multilineTextAlignment(.center)
-                .lineSpacing(5)
-            Spacer()
-            Spacer()
+    private var dots: some View {
+        HStack(spacing: 8) {
+            ForEach(pages.indices, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(i == index ? AegisPalette.goldBright : Color.white.opacity(0.25))
+                    .frame(width: i == index ? 22 : 8, height: 8)
+                    .animation(.easeInOut(duration: 0.2), value: index)
+            }
         }
-        .padding(.horizontal, 32)
     }
 }

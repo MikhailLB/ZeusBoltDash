@@ -15,14 +15,16 @@ struct ArenaView: View {
 
     private let loop = GameLoop()
 
-    init(deity: Deity, relics: RelicLevels, isTutorial: Bool = false) {
+    init(deity: Deity, profile: Profile, isTutorial: Bool = false) {
         self.deity = deity
         self.isTutorial = isTutorial
         let screen = UIScreen.main.bounds
         let radius = Double(min(screen.width, screen.height) * 0.44)
         _world = StateObject(wrappedValue: ArenaWorld(
             deity: deity,
-            relics: relics,
+            parryWindow: profile.parryWindow,
+            maxGuard: profile.guardCapacity,
+            wrathPerParry: profile.wrathPerParry,
             arenaRadius: radius,
             isTutorial: isTutorial
         ))
@@ -70,7 +72,7 @@ struct ArenaView: View {
     // MARK: - Subviews
     private var background: some View {
         Group {
-            if let bg = sprites[deity.backgroundSprite] {
+            if let bg = sprites[deity.arenaSprite] {
                 Image(uiImage: bg)
                     .resizable()
                     .scaledToFill()
@@ -105,7 +107,7 @@ struct ArenaView: View {
                     .position(center)
             } else {
                 Circle()
-                    .fill(Color(hex: deity.accentColorHex))
+                    .fill(deity.accent)
                     .frame(width: 64, height: 64)
                     .position(center)
             }
@@ -197,7 +199,7 @@ struct ArenaView: View {
 
     private func loadSprites() {
         let names = [
-            deity.heroSprite, deity.backgroundSprite,
+            deity.heroSprite, deity.arenaSprite,
             "zeus_hero", "hades_hero", "poseidon_hero", "prometheus_hero",
             "boulder_a", "boulder_b", "boulder_c", "boulder_d", "boulder_e",
             "bolt_frame1", "bolt_frame2", "bolt_frame3", "bolt_frame4",
@@ -212,8 +214,10 @@ struct ArenaView: View {
 
     private func handleDismiss() {
         let stats = world.sessionStats
-        store.recordRun(score: world.score, parries: stats.parries,
-                        perfectParries: stats.perfect, waves: stats.waves)
+        store.recordRun(score: world.score, wave: stats.wave,
+                        threatsRepelled: stats.parries, perfectParries: stats.perfect,
+                        bestStreak: stats.bestStreak, titansFelled: stats.titans,
+                        ultimates: stats.ults)
         dismiss()
     }
 }
@@ -240,7 +244,7 @@ private struct ResultView: View {
                 .background(AegisPalette.panel)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                AegisButton(title: "RETURN") { onClose() }
+                AegisButton(label: "RETURN", sigil: "⚔") { onClose() }
             }
             .padding(32)
         }

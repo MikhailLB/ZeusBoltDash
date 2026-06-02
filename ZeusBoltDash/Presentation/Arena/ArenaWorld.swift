@@ -47,17 +47,21 @@ final class ArenaWorld: ObservableObject {
 
     private var sessionParries = 0
     private var sessionPerfect = 0
+    private var bestStreak = 0
+    private var titansFelled = 0
+    private var ultimatesUsed = 0
 
-    init(deity: Deity, relics: RelicLevels, arenaRadius: Double, isTutorial: Bool = false) {
+    init(deity: Deity, parryWindow: Double, maxGuard: Int, wrathPerParry: Double,
+         arenaRadius: Double, isTutorial: Bool = false) {
         self.deity = deity
         self.arenaRadius = arenaRadius
         self.coreRadius = arenaRadius * 0.14
-        self.parryWindow = RelicCatalog.parryWindow(aegisLevel: relics.aegis)
-        self.maxGuard = isTutorial ? 99 : RelicCatalog.maxGuard(vigorLevel: relics.vigor)
-        self.guard_ = isTutorial ? 99 : RelicCatalog.maxGuard(vigorLevel: relics.vigor)
+        self.parryWindow = parryWindow
+        self.maxGuard = isTutorial ? 99 : maxGuard
+        self.guard_ = isTutorial ? 99 : maxGuard
         self.isTutorial = isTutorial
-        self.wrath = WrathMeter(wrathRelicLevel: relics.wrath)
-        self.ultKind = deity.ultimateKind
+        self.wrath = WrathMeter(wrathPerParry: wrathPerParry)
+        self.ultKind = deity.ultimate
     }
 
     // MARK: - Tick
@@ -115,6 +119,8 @@ final class ArenaWorld: ObservableObject {
         if outcome.perfect { sessionPerfect += 1 }
 
         streak += 1
+        if streak > bestStreak { bestStreak = streak }
+        if outcome.repelled && t.kind == .titan { titansFelled += 1 }
         let streakBonus = min(streak / 5, 5)
         let points = (outcome.perfect ? 20 : 10) + streakBonus * 2
         score += points
@@ -136,10 +142,11 @@ final class ArenaWorld: ObservableObject {
     func activateUltimate() {
         guard !isOver, !isPaused, wrath.isFull else { return }
         wrath.consume()
+        ultimatesUsed += 1
         HapticsManager.ultimateActivate()
         ultActive = true
 
-        switch deity.ultimateKind {
+        switch deity.ultimate {
         case .chainLightning:
             for t in threats where !t.isRepelled && !t.isPickup { t.repel(arena: arenaRadius) }
             score += 50
@@ -174,8 +181,8 @@ final class ArenaWorld: ObservableObject {
     func pause() { isPaused = true }
     func resume() { isPaused = false }
 
-    var sessionStats: (parries: Int, perfect: Int, waves: Int) {
-        (sessionParries, sessionPerfect, waves.wave)
+    var sessionStats: (parries: Int, perfect: Int, wave: Int, bestStreak: Int, titans: Int, ults: Int) {
+        (sessionParries, sessionPerfect, waves.wave, bestStreak, titansFelled, ultimatesUsed)
     }
 
     // MARK: - Private helpers

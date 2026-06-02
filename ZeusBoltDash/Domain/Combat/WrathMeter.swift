@@ -4,17 +4,17 @@ final class WrathMeter {
     private(set) var value: Double = 0
     private let capacity: Double = 1.0
     private let decayRate: Double = 0.015
-    private let wrathBonus: Double
+    private let gainPerParry: Double
 
     var isFull: Bool { value >= capacity }
     var fraction: Double { value / capacity }
 
-    init(wrathRelicLevel: Int) {
-        wrathBonus = 1.0 + Double(wrathRelicLevel) * 0.2
+    init(wrathPerParry: Double) {
+        gainPerParry = wrathPerParry
     }
 
     func addParry(perfect: Bool) {
-        let gain = perfect ? 0.18 * wrathBonus : 0.10 * wrathBonus
+        let gain = perfect ? gainPerParry * 1.8 : gainPerParry
         value = min(capacity, value + gain)
     }
 

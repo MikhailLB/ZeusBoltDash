@@ -1,143 +1,111 @@
 import SwiftUI
 
+/// "Trials of the Gods" — achievements and lifetime statistics.
+/// Ported from the Flutter `TrialsScreen`.
 struct TrialsView: View {
     @EnvironmentObject private var store: ProfileStore
     @Environment(\.dismiss) private var dismiss
 
+    private let columns = [GridItem(.flexible(), spacing: 12),
+                           GridItem(.flexible(), spacing: 12)]
+
     var body: some View {
         ZStack {
-            SkyBackdrop()
+            AegisPalette.voidNight.ignoresSafeArea()
+            SkyBackdrop(accent: AegisPalette.emberOrange)
             VStack(spacing: 0) {
-                navBar
+                header
                 ScrollView {
-                    VStack(spacing: 0) {
-                        lifetimeStats
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 20)
-                        trialsList
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 40)
+                    VStack(alignment: .leading, spacing: 0) {
+                        statsPanel
+                        Spacer().frame(height: 18)
+                        Text("TRIALS").font(AppFonts.label(13)).tracking(3)
+                            .foregroundColor(AegisPalette.parchmentDim)
+                        Spacer().frame(height: 10)
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(TrialCatalog.all) { trial in
+                                trialCard(trial, earned: store.profile.hasTrial(trial.id))
+                            }
+                        }
                     }
+                    .padding(.init(top: 6, leading: 16, bottom: 28, trailing: 16))
                 }
             }
         }
-        .ignoresSafeArea()
-        .preferredColorScheme(.dark)
+        .navigationBarHidden(true)
     }
 
-    private var navBar: some View {
+    private var header: some View {
         HStack {
             Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(AegisPalette.text)
+                Image(systemName: "arrow.left")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(AegisPalette.goldBright)
+                    .frame(width: 44, height: 44)
             }
+            Text("TRIALS").font(AppFonts.title(22)).foregroundColor(AegisPalette.goldBright).goldGlow()
             Spacer()
-            Text("TRIALS")
-                .font(AppFonts.heading(18))
-                .foregroundStyle(AegisPalette.gold)
-            Spacer()
-            Color.clear.frame(width: 24)
+            Text("\(store.profile.earnedTrials.count) / \(TrialCatalog.all.count)")
+                .font(AppFonts.readout(16)).foregroundColor(AegisPalette.goldBright)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 16)
+        .padding(.init(top: 8, leading: 8, bottom: 4, trailing: 16))
     }
 
-    private var lifetimeStats: some View {
-        VStack(spacing: 0) {
-            Text("LIFETIME STATS")
-                .font(AppFonts.caption(11))
-                .foregroundStyle(AegisPalette.textMuted)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 10)
-            LazyVGrid(columns: [.init(.flexible()), .init(.flexible()), .init(.flexible())], spacing: 12) {
-                statCell(value: "\(store.profile.highScore)", label: "HIGH SCORE")
-                statCell(value: "\(store.profile.totalRuns)", label: "RUNS")
-                statCell(value: "\(store.profile.totalParries)", label: "PARRIES")
-                statCell(value: "\(store.profile.totalPerfectParries)", label: "PERFECT")
-                statCell(value: "\(store.profile.totalWaves)", label: "WAVES")
-                statCell(value: "\(store.profile.essence)", label: "ESSENCE")
-            }
+    private var statsPanel: some View {
+        VStack(spacing: 8) {
+            Text("CHRONICLE").font(AppFonts.label(13)).tracking(3).foregroundColor(AegisPalette.goldBright)
+            statRow("High score", "\(store.profile.highScore)")
+            statRow("Best wave", "\(store.profile.bestWave)")
+            statRow("Sieges fought", "\(store.profile.trialsRun)")
+            statRow("Threats repelled", "\(store.profile.threatsRepelled)")
+            statRow("Perfect parries", "\(store.profile.perfectParries)")
+            statRow("Best streak", "\(store.profile.bestParryStreak)")
+            statRow("Titans felled", "\(store.profile.titansFelled)")
+            statRow("Ultimates unleashed", "\(store.profile.ultimatesUnleashed)")
         }
         .padding(16)
-        .background(AegisPalette.card)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AegisPalette.cardBorder, lineWidth: 1))
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 16).fill(AegisPalette.deepPurple.opacity(0.55)))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AegisPalette.gold.opacity(0.4), lineWidth: 1))
     }
 
-    private func statCell(value: String, label: String) -> some View {
-        VStack(spacing: 3) {
-            Text(value)
-                .font(AppFonts.score(20))
-                .foregroundStyle(AegisPalette.gold)
-            Text(label)
-                .font(AppFonts.caption(9))
-                .foregroundStyle(AegisPalette.textMuted)
+    private func statRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).font(AppFonts.label(12)).foregroundColor(AegisPalette.parchmentDim)
+            Spacer()
+            Text(value).font(AppFonts.readout(14)).foregroundColor(AegisPalette.parchment)
         }
+        .padding(.vertical, 5)
     }
 
-    private var trialsList: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("ACHIEVEMENTS")
-                .font(AppFonts.caption(11))
-                .foregroundStyle(AegisPalette.textMuted)
-            ForEach(TrialsCatalog.all) { trial in
-                trialRow(trial)
+    private func trialCard(_ t: Trial, earned: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text(t.sigil).font(.system(size: 22)).opacity(earned ? 1 : 0.35)
+                Spacer()
+                Image(systemName: earned ? "checkmark.seal.fill" : "lock")
+                    .font(.system(size: 16))
+                    .foregroundColor(earned ? AegisPalette.goldBright : AegisPalette.parchmentDim)
             }
-        }
-    }
-
-    private func trialRow(_ trial: Trial) -> some View {
-        let progress = progressValue(for: trial)
-        let completed = progress >= trial.target
-        let fraction = min(1.0, Double(progress) / Double(trial.target))
-
-        return HStack(spacing: 12) {
-            Image(systemName: trial.icon)
-                .font(.system(size: 20))
-                .foregroundStyle(completed ? AegisPalette.gold : AegisPalette.textMuted)
-                .frame(width: 32)
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(trial.title)
-                        .font(AppFonts.body(14))
-                        .foregroundStyle(completed ? AegisPalette.gold : AegisPalette.text)
-                    Spacer()
-                    Text("\(min(progress, trial.target))/\(trial.target)")
-                        .font(AppFonts.caption(11))
-                        .foregroundStyle(AegisPalette.textMuted)
-                }
-                Text(trial.description)
-                    .font(AppFonts.caption(11))
-                    .foregroundStyle(AegisPalette.textMuted)
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(AegisPalette.panel)
-                        Capsule()
-                            .fill(completed ? AegisPalette.gold : AegisPalette.divine)
-                            .frame(width: geo.size.width * fraction)
-                    }
-                }.frame(height: 4)
-            }
+            Spacer()
+            Text(t.title).font(AppFonts.title(13)).tracking(1)
+                .foregroundColor(earned ? .white : AegisPalette.parchmentDim)
+            Spacer().frame(height: 3)
+            Text(t.detail).font(AppFonts.label(10)).foregroundColor(AegisPalette.parchmentDim)
+                .lineLimit(2)
         }
         .padding(12)
-        .background(AegisPalette.card)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(
-            completed ? AegisPalette.gold.opacity(0.4) : AegisPalette.cardBorder,
-            lineWidth: completed ? 1.5 : 1
-        ))
-    }
-
-    private func progressValue(for trial: Trial) -> Int {
-        switch trial.progressKey {
-        case "totalRuns":          return store.profile.totalRuns
-        case "totalParries":       return store.profile.totalParries
-        case "totalPerfectParries":return store.profile.totalPerfectParries
-        case "totalWaves":         return store.profile.totalWaves
-        case "highScore":          return store.profile.highScore
-        default:                   return store.profile.trialProgress[trial.progressKey] ?? 0
-        }
+        .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+        .aspectRatio(1.55, contentMode: .fit)
+        .background(
+            RoundedRectangle(cornerRadius: 14).fill(
+                LinearGradient(
+                    colors: earned
+                        ? [AegisPalette.goldDeep.opacity(0.6), AegisPalette.deepPurple]
+                        : [AegisPalette.deepPurple.opacity(0.5), AegisPalette.voidNight],
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+        )
+        .overlay(RoundedRectangle(cornerRadius: 14)
+            .stroke(earned ? AegisPalette.gold : Color.white.opacity(0.12), lineWidth: earned ? 1.6 : 1))
     }
 }

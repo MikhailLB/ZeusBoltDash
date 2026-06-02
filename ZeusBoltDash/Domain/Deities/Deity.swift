@@ -1,5 +1,6 @@
-import Foundation
+import SwiftUI
 
+/// The signature power each deity unleashes when their Wrath meter fills.
 enum UltimateKind {
     case chainLightning
     case tidalSurge
@@ -7,15 +8,17 @@ enum UltimateKind {
     case flameRing
 }
 
+/// Static definition of a playable deity. Pure data ported from the Flutter
+/// `Deity` (asset paths remapped to the renamed Swift resources).
 struct Deity: Identifiable {
     let id: String
     let name: String
-    let title: String
-    let unlockCost: Int
+    let epithet: String
     let heroSprite: String
-    let backgroundSprite: String
-    let ultimateKind: UltimateKind
+    let arenaSprite: String
+    let accent: Color
+    let ultimate: UltimateKind
     let ultimateName: String
-    let ultimateDescription: String
-    let accentColorHex: UInt32
+    let ultimateBlurb: String
+    let price: Int
 }

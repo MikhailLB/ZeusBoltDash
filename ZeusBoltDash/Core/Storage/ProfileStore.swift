@@ -5,8 +5,6 @@ final class ProfileStore: ObservableObject {
     @Published var profile: Profile
 
     private let key = "aegis_profile_v1"
-    private let encoder = JSONEncoder()
-    private let decoder = JSONDecoder()
 
     init() {
         if let data = UserDefaults.standard.data(forKey: "aegis_profile_v1"),
@@ -18,85 +16,79 @@ final class ProfileStore: ObservableObject {
     }
 
     func save() {
-        guard let data = try? encoder.encode(profile) else { return }
+        guard let data = try? JSONEncoder().encode(profile) else { return }
         UserDefaults.standard.set(data, forKey: key)
     }
 
-    func addEssence(_ amount: Int) {
-        profile.essence += amount
+    /// Apply a mutation and persist (mirrors Flutter `mutate`).
+    func mutate(_ block: (inout Profile) -> Void) {
+        block(&profile)
         save()
     }
 
-    func unlockDeity(_ id: String, cost: Int) -> Bool {
-        guard profile.essence >= cost, !profile.ownedDeityIDs.contains(id) else { return false }
-        profile.essence -= cost
-        profile.ownedDeityIDs.append(id)
-        save()
-        return true
-    }
-
+    // MARK: - Deities
     func selectDeity(_ id: String) {
-        guard profile.ownedDeityIDs.contains(id) else { return }
-        profile.selectedDeityID = id
-        save()
+        guard profile.ownsDeity(id) else { return }
+        mutate { $0.deity = id }
     }
 
-    func upgradeRelic(_ relic: RelicKind) -> Bool {
-        let maxLevel = 3
-        switch relic {
-        case .aegis:
-            guard profile.relics.aegis < maxLevel else { return false }
-            let cost = (profile.relics.aegis + 1) * 80
-            guard profile.essence >= cost else { return false }
-            profile.essence -= cost
-            profile.relics.aegis += 1
-        case .wrath:
-            guard profile.relics.wrath < maxLevel else { return false }
-            let cost = (profile.relics.wrath + 1) * 80
-            guard profile.essence >= cost else { return false }
-            profile.essence -= cost
-            profile.relics.wrath += 1
-        case .vigor:
-            guard profile.relics.vigor < maxLevel else { return false }
-            let cost = (profile.relics.vigor + 1) * 80
-            guard profile.essence >= cost else { return false }
-            profile.essence -= cost
-            profile.relics.vigor += 1
+    @discardableResult
+    func unlockDeity(_ id: String, price: Int) -> Bool {
+        guard !profile.ownsDeity(id), profile.essence >= price else { return false }
+        mutate {
+            $0.essence -= price
+            $0.unlockedDeities.append(id)
+            $0.deity = id
         }
-        save()
         return true
     }
 
-    func recordRun(score: Int, parries: Int, perfectParries: Int, waves: Int) {
-        if score > profile.highScore { profile.highScore = score }
-        profile.totalParries += parries
-        profile.totalPerfectParries += perfectParries
-        profile.totalWaves += waves
-        profile.totalRuns += 1
-        profile.essence += score / 12
-        checkDailyBlessing()
-        save()
+    // MARK: - Relics
+    @discardableResult
+    func upgradeRelic(_ relic: Relic) -> Bool {
+        guard let cost = relic.nextCost(profile), profile.essence >= cost else { return false }
+        mutate {
+            $0.essence -= cost
+            relic.setLevel(&$0, relic.levelOf($0) + 1)
+        }
+        return true
     }
 
-    func markTrialProgress(_ id: String, value: Int) {
-        let current = profile.trialProgress[id] ?? 0
-        if value > current {
-            profile.trialProgress[id] = value
-            save()
-        }
+    // MARK: - Trials
+    @discardableResult
+    func earnTrial(_ id: String) -> Bool {
+        guard !profile.earnedTrials.contains(id) else { return false }
+        mutate { $0.earnedTrials.append(id) }
+        return true
     }
 
-    private func checkDailyBlessing() {
-        let today = ISO8601DateFormatter().string(from: Date()).prefix(10).description
-        if profile.lastDailyBlessingDate == today { return }
-        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())
-            .flatMap { ISO8601DateFormatter().string(from: $0).prefix(10).description }
-        if profile.lastDailyBlessingDate == yesterday {
-            profile.consecutiveDays += 1
-        } else {
-            profile.consecutiveDays = 1
+    // MARK: - Daily blessing
+    /// Grants a once-per-day essence blessing. Returns the amount granted (0 if
+    /// already claimed today).
+    func claimBlessing() -> Int {
+        let today = Int(Date().timeIntervalSince1970 / 86_400)
+        guard profile.lastBlessingDay < today else { return 0 }
+        let amount = 50
+        mutate {
+            $0.lastBlessingDay = today
+            $0.essence += amount
         }
-        profile.lastDailyBlessingDate = today
-        profile.essence += 15 + profile.consecutiveDays * 5
+        return amount
+    }
+
+    // MARK: - Run results
+    func recordRun(score: Int, wave: Int, threatsRepelled: Int, perfectParries: Int,
+                   bestStreak: Int, titansFelled: Int, ultimates: Int) {
+        mutate {
+            if score > $0.highScore { $0.highScore = score }
+            if wave > $0.bestWave { $0.bestWave = wave }
+            $0.essence += score / 12
+            $0.trialsRun += 1
+            $0.threatsRepelled += threatsRepelled
+            $0.perfectParries += perfectParries
+            if bestStreak > $0.bestParryStreak { $0.bestParryStreak = bestStreak }
+            $0.titansFelled += titansFelled
+            $0.ultimatesUnleashed += ultimates
+        }
     }
 }
