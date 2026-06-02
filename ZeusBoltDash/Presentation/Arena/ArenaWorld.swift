@@ -11,9 +11,9 @@ struct FloatText: Identifiable {
 }
 
 struct ParryFlash {
-    var position: Vec2
-    var opacity: Double = 1.0
+    var angle: Double
     var perfect: Bool
+    var t: Double = 0
 }
 
 final class ArenaWorld: ObservableObject {
@@ -156,7 +156,15 @@ final class ArenaWorld: ObservableObject {
             arenaRadius: arenaRadius
         )
 
-        guard outcome.connected, let t = outcome.target else { return }
+        // A flash always appears in the swung direction so the shield arc reads
+        // clearly on the ring, even on a miss.
+        parryFlashes.append(ParryFlash(angle: angle, perfect: outcome.perfect))
+
+        guard outcome.connected, let t = outcome.target else {
+            // Missed swing breaks the streak (mirrors Flutter).
+            streak = 0
+            return
+        }
 
         sessionParries += 1
         pendingTrials.insert("first_parry")
@@ -182,11 +190,9 @@ final class ArenaWorld: ObservableObject {
         if outcome.perfect {
             HapticsManager.perfectParry()
             emit(text: "PERFECT +\(points)", at: pos, isGold: true)
-            parryFlashes.append(ParryFlash(position: pos, perfect: true))
         } else {
             HapticsManager.parry()
             emit(text: "+\(points)", at: pos, isGold: false)
-            parryFlashes.append(ParryFlash(position: pos, perfect: false))
         }
     }
 
@@ -399,9 +405,7 @@ final class ArenaWorld: ObservableObject {
     }
 
     private func updateFlashes(dt: Double) {
-        for i in parryFlashes.indices {
-            parryFlashes[i].opacity = max(0, parryFlashes[i].opacity - dt * 3)
-        }
-        parryFlashes.removeAll { $0.opacity <= 0 }
+        for i in parryFlashes.indices { parryFlashes[i].t += dt }
+        parryFlashes.removeAll { $0.t > 0.32 }
     }
 }

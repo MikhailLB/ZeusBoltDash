@@ -1,7 +1,7 @@
 import UIKit
 
 /// CADisplayLink-backed game loop mirroring Flutter's Ticker.
-final class GameLoop {
+final class GameLoop: ObservableObject {
     var onTick: ((Double) -> Void)?
 
     private var displayLink: CADisplayLink?

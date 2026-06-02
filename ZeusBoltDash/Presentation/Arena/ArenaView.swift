@@ -13,11 +13,10 @@ struct ArenaView: View {
     var onExit: (() -> Void)?
 
     @StateObject private var world: ArenaWorld
+    @StateObject private var loop = GameLoop()
     @State private var sprites: [String: UIImage] = [:]
-    @State private var swipeStart: CGPoint = .zero
+    @State private var swipeFired = false
     @State private var committed = false
-
-    private let loop = GameLoop()
 
     init(deity: Deity, profile: Profile, isTutorial: Bool = false,
          onTutorialDone: (() -> Void)? = nil, onExit: (() -> Void)? = nil) {
@@ -242,12 +241,33 @@ struct ArenaView: View {
     }
 
     private func drawParryFlashes(ctx: GraphicsContext, center: CGPoint) {
+        let parryR = world.parryRadius
         for f in world.parryFlashes {
-            let pos = CGPoint(x: center.x + f.position.x, y: center.y + f.position.y)
-            let color = f.perfect ? AegisPalette.perfectFlash : AegisPalette.parryFlash
-            var path = Path()
-            path.addEllipse(in: CGRect(x: pos.x - 20, y: pos.y - 20, width: 40, height: 40))
-            ctx.fill(path, with: .color(color.opacity(f.opacity * 0.6)))
+            let progress = min(1, f.t / 0.32)
+            let alpha = 1 - progress
+            let color = f.perfect ? AegisPalette.goldBright : deity.accent
+            let sweep = f.perfect ? 1.5 : 1.1
+            let start = Angle(radians: f.angle - sweep / 2)
+            let end = Angle(radians: f.angle + sweep / 2)
+
+            // Wide soft aura arc.
+            var glow = Path()
+            glow.addArc(center: center, radius: parryR, startAngle: start, endAngle: end, clockwise: false)
+            ctx.stroke(glow, with: .color(color.opacity(0.45 * alpha)),
+                       style: StrokeStyle(lineWidth: (f.perfect ? 30 : 22) * (1 - progress * 0.3), lineCap: .round))
+
+            // Crisp bright arc on top.
+            var core = Path()
+            core.addArc(center: center, radius: parryR, startAngle: start, endAngle: end, clockwise: false)
+            ctx.stroke(core, with: .color(.white.opacity(0.9 * alpha)),
+                       style: StrokeStyle(lineWidth: (f.perfect ? 12 : 8) * (1 - progress * 0.35), lineCap: .round))
+
+            // Expanding shockwave dot in the swung direction.
+            let waveR = parryR + progress * 70
+            let wp = CGPoint(x: center.x + cos(f.angle) * waveR, y: center.y + sin(f.angle) * waveR)
+            let dotR = (f.perfect ? 26.0 : 18.0) * (0.5 + progress)
+            let wave = Path(ellipseIn: CGRect(x: wp.x - dotR, y: wp.y - dotR, width: dotR * 2, height: dotR * 2))
+            ctx.stroke(wave, with: .color(color.opacity(0.8 * alpha)), lineWidth: 4 * alpha)
         }
     }
 
@@ -270,13 +290,20 @@ struct ArenaView: View {
     }
 
     // MARK: - Gestures
+    /// Mirrors the Flutter `onPanStart`/`onPanUpdate`: as soon as the finger
+    /// travels >= 22pt within a single drag, fire one directional parry; it
+    /// re-arms when the finger lifts. This makes parries land mid-gesture.
     private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 6)
-            .onChanged { v in swipeStart = v.startLocation }
-            .onEnded { v in
+        DragGesture(minimumDistance: 0)
+            .onChanged { v in
+                guard !swipeFired else { return }
                 let d = Vec2(x: v.translation.width, y: v.translation.height)
-                world.onSwipe(delta: d)
+                if d.magnitude >= 22 {
+                    world.onSwipe(delta: d)
+                    swipeFired = true
+                }
             }
+            .onEnded { _ in swipeFired = false }
     }
 
     // MARK: - Helpers
