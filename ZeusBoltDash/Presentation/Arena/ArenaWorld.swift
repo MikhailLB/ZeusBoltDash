@@ -68,6 +68,14 @@ final class ArenaWorld: ObservableObject {
 
     var essenceEarned: Int { score / 12 }
 
+    /// The parry ring: wide on wave 1, shrinking each wave down to the default
+    /// `parryRadius` (the most-shrunk floor) by wave 7.
+    var ringRadius: Double {
+        let maxR = parryRadius * 1.65
+        let shrink = Double(min(max(wave - 1, 0), 6)) / 6.0
+        return maxR - (maxR - parryRadius) * shrink
+    }
+
     init(deity: Deity, parryWindow: Double, maxGuard: Int, wrathPerParry: Double,
          arenaRadius: Double, coreRadius: Double, parryRadius: Double,
          isTutorial: Bool = false) {
@@ -93,7 +101,7 @@ final class ArenaWorld: ObservableObject {
         if isTutorial {
             updateTutorial(dt: dt)
         } else {
-            waves.update(dt: effectiveDt, arenaRadius: arenaRadius, liveThreats: threats.filter { !$0.isRepelled }.count) { [weak self] t in
+            waves.update(dt: effectiveDt, arenaRadius: arenaRadius, liveThreats: threats.filter { $0.isAlive }.count) { [weak self] t in
                 self?.threats.append(t)
             }
 
@@ -152,6 +160,7 @@ final class ArenaWorld: ObservableObject {
             swipeAngle: angle,
             threats: threats,
             coreRadius: coreRadius,
+            ringRadius: ringRadius,
             parryWindow: parryWindow,
             arenaRadius: arenaRadius
         )
@@ -278,7 +287,7 @@ final class ArenaWorld: ObservableObject {
 
     // MARK: - Tutorial state machine
     private func updateTutorial(dt: Double) {
-        let live = threats.filter { !$0.isRepelled }.count
+        let live = threats.filter { $0.isAlive }.count
         switch tutPhase {
         case 0:
             tutorialHint = "👉  Swipe toward the ROCK to push it away!"
@@ -353,7 +362,7 @@ final class ArenaWorld: ObservableObject {
     }
 
     private func collectPickup(_ t: Threat) {
-        t.repel(arena: arenaRadius)
+        t.collect()
         HapticsManager.blessingCollect()
         if t.kind == .blessing {
             tutBlessings += 1
@@ -388,7 +397,10 @@ final class ArenaWorld: ObservableObject {
     }
 
     private func cullDeadThreats() {
-        threats.removeAll { $0.isRepelled && $0.radius > arenaRadius * 1.3 }
+        threats.removeAll {
+            ($0.isRepelled && $0.radius > arenaRadius * 1.3) ||
+            ($0.isCollected && $0.collectT > 0.4)
+        }
     }
 
     private func emit(text: String, at pos: Vec2, isGold: Bool) {

@@ -19,6 +19,9 @@ final class Threat: Identifiable {
     var isRepelled = false
     var repelBearing: Double = 0
     var repelSpeed: Double = 0
+    /// Pickups are absorbed (not repelled): they pop and fade at the core.
+    var isCollected = false
+    var collectT: Double = 0
 
     var sprite: String {
         switch kind {
@@ -32,7 +35,7 @@ final class Threat: Identifiable {
     }
 
     var isPickup: Bool { kind == .blessing || kind == .essenceMote }
-    var isAlive: Bool { !isRepelled && radius > 0 }
+    var isAlive: Bool { !isRepelled && !isCollected && radius > 0 }
 
     var position: Vec2 { Vec2(angle: bearing, radius: radius) }
 
@@ -48,6 +51,8 @@ final class Threat: Identifiable {
         if isRepelled {
             radius += repelSpeed * dt
             bearing += repelBearing * dt
+        } else if isCollected {
+            collectT += dt
         } else {
             radius -= speed * dt
         }
@@ -57,6 +62,12 @@ final class Threat: Identifiable {
         isRepelled = true
         repelSpeed = speed * 2.2
         repelBearing = Double.random(in: -0.4...0.4)
+    }
+
+    /// Absorb this pickup at the core (pop + fade instead of flying away).
+    func collect() {
+        isCollected = true
+        collectT = 0
     }
 
     var timeToCore: Double {

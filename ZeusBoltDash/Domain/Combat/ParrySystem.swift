@@ -10,38 +10,41 @@ struct ParryOutcome {
 }
 
 enum ParrySystem {
-    /// Angular tolerance (radians) between the swipe and the threat bearing (~35°).
-    static let angleTolerance = 0.62
-    /// Extra reach (seconds) ahead of the timing window so early swipes connect.
-    static let reachAhead = 0.55
+    /// Angular tolerance (radians) between the swipe and the threat bearing (~38°).
+    static let angleTolerance = 0.66
 
     static func swipeAngle(from delta: Vec2) -> Double? {
         guard delta.magnitude > 16 else { return nil }
         return atan2(delta.y, delta.x)
     }
 
+    /// Resolves a directional parry. A threat can only be deflected once it has
+    /// entered the guard ring (`radius <= ringRadius`); the finger may swipe
+    /// anywhere on screen — only the direction matters. Threats closer to the
+    /// core are picked first, and a hit deep inside the ring counts as perfect.
     static func resolve(
         swipeAngle: Double,
         threats: [Threat],
         coreRadius: Double,
+        ringRadius: Double,
         parryWindow: Double,
         arenaRadius: Double
     ) -> ParryOutcome {
         var best: Threat? = nil
-        var bestTime = Double.infinity
+        var bestRadius = Double.infinity
 
-        for t in threats where !t.isRepelled && !t.isPickup {
-            let diff = angleDiff(swipeAngle, t.bearing)
-            guard diff <= angleTolerance else { continue }
-            // Time for the threat to reach the deity at the core.
-            let ttc = t.speed > 0 ? (t.radius - coreRadius) / t.speed : .infinity
-            guard ttc <= parryWindow + reachAhead else { continue }
-            if ttc < bestTime { bestTime = ttc; best = t }
+        for t in threats where !t.isRepelled && !t.isCollected && !t.isPickup {
+            guard angleDiff(swipeAngle, t.bearing) <= angleTolerance else { continue }
+            guard t.radius <= ringRadius else { continue } // must be inside the circle
+            if t.radius < bestRadius { bestRadius = t.radius; best = t }
         }
 
         guard let hit = best else { return .miss }
 
-        let perfect = bestTime <= parryWindow * 0.5
+        // The Aegis relic (parryWindow) widens the generous "perfect" band.
+        let perfectFrac = min(0.8, 0.45 + (parryWindow - 0.18) * 2.0)
+        let perfectBand = coreRadius + (ringRadius - coreRadius) * perfectFrac
+        let perfect = hit.radius <= perfectBand
         hit.hp -= 1
 
         if hit.hp <= 0 {

@@ -141,6 +141,9 @@ struct ArenaView: View {
             Canvas { ctx, size in
                 let t = timeline.date.timeIntervalSinceReferenceDate
                 drawGuardRing(ctx: ctx, center: center, time: t)
+                if world.isTutorial && world.tutorialHint != nil {
+                    drawSwipeHint(ctx: ctx, center: center, time: t)
+                }
                 drawThreats(ctx: ctx, center: center)
                 drawParryFlashes(ctx: ctx, center: center)
                 drawFloatTexts(ctx: ctx, center: center)
@@ -174,7 +177,7 @@ struct ArenaView: View {
     // MARK: - Canvas drawing
     private func drawGuardRing(ctx: GraphicsContext, center: CGPoint, time: Double) {
         let acc = deity.accent
-        let parryR = world.parryRadius
+        let parryR = world.ringRadius
         let pulse = 0.5 + 0.5 * sin(time.truncatingRemainder(dividingBy: 2) * .pi)
 
         // Soft core aura where the deity stands.
@@ -214,34 +217,78 @@ struct ArenaView: View {
     private func drawThreats(ctx: GraphicsContext, center: CGPoint) {
         for t in world.threats {
             let pos = CGPoint(x: center.x + t.position.x, y: center.y + t.position.y)
-            let size = threatSize(t)
+            var size = threatSize(t)
+
+            // Pickups "pop" and fade when absorbed at the core.
+            var layer = ctx
+            if t.isCollected {
+                let p = min(1, t.collectT / 0.4)
+                layer.opacity = 1 - p
+                size *= 1 + p * 1.6
+            }
 
             if t.isPickup {
-                // Glowing gift orb.
                 let color = t.kind == .blessing ? AegisPalette.blessing : AegisPalette.goldBright
-                let glowR = size * 0.85
+                let glowR = size * 0.9
                 let glow = Path(ellipseIn: CGRect(x: pos.x - glowR, y: pos.y - glowR,
                                                   width: glowR * 2, height: glowR * 2))
-                ctx.fill(glow, with: .radialGradient(
-                    Gradient(colors: [color.opacity(0.55), color.opacity(0)]),
+                layer.fill(glow, with: .radialGradient(
+                    Gradient(colors: [color.opacity(0.6), color.opacity(0)]),
                     center: pos, startRadius: 0, endRadius: glowR))
             }
 
             if let img = sprites[t.sprite] {
                 let rect = CGRect(x: pos.x - size / 2, y: pos.y - size / 2, width: size, height: size)
-                ctx.draw(Image(uiImage: img), in: rect)
+                layer.draw(Image(uiImage: img), in: rect)
             } else {
                 let path = Path(ellipseIn: CGRect(x: pos.x - size / 2, y: pos.y - size / 2,
                                                   width: size, height: size))
                 let color: Color = t.isPickup ? AegisPalette.essence :
                                    t.kind == .titan ? AegisPalette.wrath : AegisPalette.divine
-                ctx.fill(path, with: .color(color))
+                layer.fill(path, with: .color(color))
+            }
+        }
+    }
+
+    /// Animated swipe demonstration during the tutorial: a chevron travels from
+    /// the deity outward toward the nearest rock, showing the flick to perform.
+    private func drawSwipeHint(ctx: GraphicsContext, center: CGPoint, time: Double) {
+        guard let target = world.threats
+            .filter({ $0.isAlive && !$0.isPickup })
+            .min(by: { $0.radius < $1.radius }) else { return }
+
+        let a = target.bearing
+        let dir = CGPoint(x: cos(a), y: sin(a))
+        let r0 = world.coreRadius * 1.3
+        let r1 = world.ringRadius * 0.96
+
+        // Dashed guide line from the deity toward the rock.
+        var guide = Path()
+        guide.move(to: CGPoint(x: center.x + dir.x * r0, y: center.y + dir.y * r0))
+        guide.addLine(to: CGPoint(x: center.x + dir.x * r1, y: center.y + dir.y * r1))
+        ctx.stroke(guide, with: .color(.white.opacity(0.25)),
+                   style: StrokeStyle(lineWidth: 3, dash: [6, 6]))
+
+        // Two chevrons sliding outward to imply the flick motion.
+        for k in 0..<2 {
+            let phase = ((time * 1.1) + Double(k) * 0.5).truncatingRemainder(dividingBy: 1.0)
+            let rr = r0 + (r1 - r0) * phase
+            let fade = sin(phase * .pi) // fade in/out at the ends
+            let p = CGPoint(x: center.x + dir.x * rr, y: center.y + dir.y * rr)
+            let wing = 12.0
+            for s in [-1.0, 1.0] {
+                let ba = a + .pi + s * 0.5
+                var chev = Path()
+                chev.move(to: p)
+                chev.addLine(to: CGPoint(x: p.x + cos(ba) * wing, y: p.y + sin(ba) * wing))
+                ctx.stroke(chev, with: .color(AegisPalette.goldBright.opacity(0.9 * fade)),
+                           style: StrokeStyle(lineWidth: 4, lineCap: .round))
             }
         }
     }
 
     private func drawParryFlashes(ctx: GraphicsContext, center: CGPoint) {
-        let parryR = world.parryRadius
+        let parryR = world.ringRadius
         for f in world.parryFlashes {
             let progress = min(1, f.t / 0.32)
             let alpha = 1 - progress
