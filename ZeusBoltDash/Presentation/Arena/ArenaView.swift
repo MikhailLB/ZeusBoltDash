@@ -188,20 +188,37 @@ struct ArenaView: View {
             Gradient(colors: [acc.opacity(0), acc.opacity(0.16 + pulse * 0.10), acc.opacity(0)]),
             center: center, startRadius: auraR * 0.55, endRadius: auraR))
 
-        // The pulsing parry guide ring.
         let ringRect = CGRect(x: center.x - parryR, y: center.y - parryR,
                               width: parryR * 2, height: parryR * 2)
-        ctx.stroke(Path(ellipseIn: ringRect),
-                   with: .color(acc.opacity(0.35 + pulse * 0.25)), lineWidth: 2.4)
+        let ringPath = Path(ellipseIn: ringRect)
+        let ringColor = AegisPalette.guardRing
+
+        // Soft outer halo so the ring reads against the bright arena art.
+        ctx.stroke(ringPath, with: .color(ringColor.opacity(0.22 + pulse * 0.18)),
+                   style: StrokeStyle(lineWidth: 16, lineCap: .round))
+        // Bold main ring.
+        ctx.stroke(ringPath, with: .color(ringColor.opacity(0.9)),
+                   style: StrokeStyle(lineWidth: 5))
+        // Crisp bright inner line that pulses.
+        ctx.stroke(ringPath, with: .color(.white.opacity(0.5 + pulse * 0.4)),
+                   style: StrokeStyle(lineWidth: 2))
+
+        // A rotating highlight arc sweeping the ring to draw the eye.
+        let rot = time.truncatingRemainder(dividingBy: 2.4) / 2.4 * .pi * 2
+        var sweep = Path()
+        sweep.addArc(center: center, radius: parryR,
+                     startAngle: .radians(rot), endAngle: .radians(rot + 0.9), clockwise: false)
+        ctx.stroke(sweep, with: .color(acc.opacity(0.95)),
+                   style: StrokeStyle(lineWidth: 6, lineCap: .round))
 
         // Temple-dial tick marks around the ring.
         for i in 0..<12 {
             let a = Double(i) / 12 * .pi * 2
-            let p1 = CGPoint(x: center.x + cos(a) * (parryR - 6), y: center.y + sin(a) * (parryR - 6))
-            let p2 = CGPoint(x: center.x + cos(a) * (parryR + 6), y: center.y + sin(a) * (parryR + 6))
+            let p1 = CGPoint(x: center.x + cos(a) * (parryR - 7), y: center.y + sin(a) * (parryR - 7))
+            let p2 = CGPoint(x: center.x + cos(a) * (parryR + 7), y: center.y + sin(a) * (parryR + 7))
             var tick = Path()
             tick.move(to: p1); tick.addLine(to: p2)
-            ctx.stroke(tick, with: .color(AegisPalette.gold.opacity(0.3)), lineWidth: 2)
+            ctx.stroke(tick, with: .color(AegisPalette.gold.opacity(0.5)), lineWidth: 2.5)
         }
     }
 

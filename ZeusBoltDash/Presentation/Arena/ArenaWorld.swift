@@ -337,7 +337,7 @@ final class ArenaWorld: ObservableObject {
 
     // MARK: - Private helpers
     private func checkCoreImpacts() {
-        for t in threats where !t.isRepelled {
+        for t in threats where !t.isRepelled && !t.isCollected {
             if t.radius <= coreRadius {
                 if t.isPickup {
                     collectPickup(t)
